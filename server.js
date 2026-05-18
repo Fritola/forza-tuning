@@ -283,7 +283,7 @@ function parseForzaTelemetry(msg) {
     telemetry.brakeInput = readUInt8(316) / 255;
     telemetry.clutchInput = readUInt8(317) / 255;
     telemetry.handbrakeInput = readUInt8(318) / 255;
-    telemetry.gear = readUInt8(319); // 11 = Neutral, 0 = Reverse
+    telemetry.gear = readUInt8(319); // 0 = Neutral, 255 = Reverse
     telemetry.steer = readInt8(320) / 127; // -1 to 1
   } else {
     // Fallback estimates if only Sled V1 is sent
@@ -302,7 +302,7 @@ function parseForzaTelemetry(msg) {
     telemetry.brakeInput = 0;
     telemetry.clutchInput = 0;
     telemetry.handbrakeInput = 0;
-    telemetry.gear = 11;
+    telemetry.gear = 0;
     telemetry.steer = 0;
   }
 
