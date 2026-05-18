@@ -2534,6 +2534,9 @@ body {
   align-items: center;
   flex: 1;
   position: relative;
+  z-index: 2;
+  padding: 0 25px;
+  box-sizing: border-box;
 }
 
 .ddu-gear-display {
@@ -2595,22 +2598,23 @@ body {
   position: absolute;
   top: 15px;
   bottom: 15px;
-  width: 14px;
+  width: 8px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
   background: rgba(255, 255, 255, 0.02);
   border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
+  z-index: 1;
 }
 
 .ddu-pedal-indicators.throttle {
-  left: 20px;
+  left: 10px;
 }
 
 .ddu-pedal-indicators.brake {
-  right: 20px;
+  right: 10px;
 }
 
 .ddu-pedal-fill {
