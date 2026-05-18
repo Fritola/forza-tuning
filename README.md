@@ -6,48 +6,39 @@ Com ele, você pode acompanhar a temperatura dos pneus (em Celsius), as forças 
 
 ---
 
-## 📋 Guia de Instalação Rápida (Passo a Passo para Iniciantes)
+## 📋 Guia de Uso Rápidos
 
-Se você não tem nenhum conhecimento de programação ou tecnologia, não se preocupe! Este guia foi feito para você. Siga os passos abaixo e tudo funcionará perfeitamente.
-
-### 🌐 Passo 1: Instalar o "Motor" do Aplicativo (Node.js)
-Para o painel funcionar e ler os dados do Forza, precisamos de um programa leve e seguro chamado **Node.js**.
-
-1. Acesse o site oficial: **[nodejs.org](https://nodejs.org/)**
-2. Clique no botão que diz **LTS** (é a versão mais estável e recomendada para a maioria dos usuários).
-3. Abra o arquivo baixado e instale como qualquer outro programa (basta clicar em *Next/Avançar*, aceitar os termos e clicar em *Finish/Concluir*).
+Existem duas formas de ligar o seu painel de telemetria: a mais fácil (usando o executável pronto) ou rodando direto do código-fonte (para desenvolvedores).
 
 ---
 
-### 📂 Passo 2: Abrir a Pasta do Painel
-1. Certifique-se de que a pasta `forza-tuning-hub` está salva no seu computador.
-2. Abra a pasta do projeto. No Windows, você pode clicar na barra de endereços no topo da pasta (onde mostra o caminho dos arquivos), digitar **`cmd`** e apertar **Enter**. 
-   *Isso abrirá uma tela preta (Prompt de Comando) exatamente na pasta certa!*
+### 🟢 Opção A: Usar o Executável Prático (Mais Fácil)
+Se você baixou a versão final (Release), não precisa instalar nada complicado!
+
+1. Extraia o arquivo baixado.
+2. Certifique-se de que a pasta **`dist`** está junto com o arquivo **`forza-server.exe`**.
+3. Dê um duplo-clique em **`forza-server.exe`**! 
+   *Uma janela preta se abrirá informando que o servidor está online.*
+4. Abra o seu navegador (Chrome, Edge, etc.) no PC e acesse: **`http://localhost:5173/`**
+5. **Para acessar no celular/tablet**: Basta conectar no mesmo Wi-Fi do computador e digitar no navegador do celular o endereço IP que aparecer na janela preta (exemplo: `http://192.168.15.85:5173`).
 
 ---
 
-### 🛠️ Passo 3: Preparar o Painel (Apenas na Primeira Vez)
-Com a tela preta aberta, digite o seguinte comando e aperte **Enter**:
-```bash
-npm install
-```
-> **O que isso faz?** Ele vai baixar automaticamente todos os componentes visuais e de comunicação necessários para o painel rodar. Esse processo leva cerca de 10 a 30 segundos.
+### 🔵 Opção B: Rodar Direto do Repositório (Requer Node.js)
+Se você baixou o código-fonte inteiro ou deseja modificar o painel, siga estes passos:
 
----
-
-### 🚀 Passo 4: Ligar o Painel!
-Agora que está tudo pronto, digite o comando abaixo na tela preta e aperte **Enter**:
-```bash
-npm run dev
-```
-
-Você verá mensagens na tela indicando que o servidor está rodando. O painel vai mostrar dois endereços para você acessar:
-```text
-  ➜  Local:   http://localhost:5173/          <-- Para abrir no seu computador
-  ➜  Network: http://192.168.15.85:5173/      <-- Para abrir no seu CELULAR ou TABLET!
-```
-
-> 💡 **Para acessar no Celular:** Certifique-se de que o seu celular está conectado no **mesmo Wi-Fi** do computador. Abra o navegador do celular (Chrome, Safari, etc.) e digite o endereço que aparece em `Network` (exemplo: `http://192.168.15.85:5173`).
+1. Instale o **[Node.js](https://nodejs.org/)** no seu computador (versão LTS).
+2. Abra a pasta do projeto `forza-tuning-hub`.
+3. Na barra de endereços da pasta, digite **`cmd`** e aperte **Enter** para abrir o terminal.
+4. Digite o seguinte comando para instalar as dependências (necessário apenas na primeira vez):
+   ```bash
+   npm install
+   ```
+5. Para ligar o painel, digite:
+   ```bash
+   npm run dev
+   ```
+   *O painel carregará automaticamente e mostrará os endereços (Local e Network) para você acessar no PC ou celular.*
 
 ---
 
