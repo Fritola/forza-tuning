@@ -5,14 +5,33 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 // ==========================================
 const CAR_PRESETS = [
   { id: 'custom', name: '⚙️ Carro Personalizado', weight: 1350, distribution: 52, drivetrain: 'AWD', terrain: 'road', carClass: 'S1', pi: 900 },
-  { id: 'supra98', name: '🇯🇵 Toyota Supra RZ \'98 (Drag/Drift)', weight: 1500, distribution: 53, drivetrain: 'RWD', terrain: 'drift', carClass: 'A', pi: 800 },
-  { id: 'silvia15', name: '🇯🇵 Nissan Silvia Spec-R S15 (Drift King)', weight: 1250, distribution: 54, drivetrain: 'RWD', terrain: 'drift', carClass: 'A', pi: 750 },
-  { id: 'mustangrtr', name: '🇺🇸 Ford Mustang RTR (Formula Drift)', weight: 1400, distribution: 54, drivetrain: 'RWD', terrain: 'drift', carClass: 'S1', pi: 850 },
+  
+  // ==================== DRIFT SPECIFICS ====================
+  { id: 'silvia15', name: '🇯🇵 Nissan Silvia S15 (Drift Spec-R)', weight: 1250, distribution: 54, drivetrain: 'RWD', terrain: 'drift', carClass: 'A', pi: 750 },
+  { id: 'supra98', name: '🇯🇵 Toyota Supra RZ \'98 (Drift/Drag 2JZ)', weight: 1500, distribution: 53, drivetrain: 'RWD', terrain: 'drift', carClass: 'A', pi: 800 },
+  { id: 'mustangrtr', name: '🇺🇸 Ford Mustang RTR (Formula D)', weight: 1400, distribution: 54, drivetrain: 'RWD', terrain: 'drift', carClass: 'S1', pi: 850 },
+  { id: 'rx7fd', name: '🇯🇵 Mazda RX-7 FD \'97 (Rotary Drift)', weight: 1220, distribution: 50, drivetrain: 'RWD', terrain: 'drift', carClass: 'A', pi: 780 },
+  
+  // ==================== DRAG SPECIFICS ====================
   { id: 'gtr35', name: '🇯🇵 Nissan GT-R R35 (AWD Drag Monster)', weight: 1750, distribution: 54, drivetrain: 'AWD', terrain: 'drag', carClass: 'S1', pi: 880 },
-  { id: 'charger69', name: '🇺🇸 Dodge Charger \'69 (RWD Drag Classic)', weight: 1600, distribution: 56, drivetrain: 'RWD', terrain: 'drag', carClass: 'B', pi: 650 },
+  { id: 'charger69', name: '🇺🇸 Dodge Charger \'69 (RWD Muscle Drag)', weight: 1600, distribution: 56, drivetrain: 'RWD', terrain: 'drag', carClass: 'B', pi: 650 },
+  { id: 'demon18', name: '🇺🇸 Dodge Challenger Demon (Drag King)', weight: 1850, distribution: 56, drivetrain: 'RWD', terrain: 'drag', carClass: 'S1', pi: 830 },
+  
+  // ==================== ROAD RACING / TRACK GRIP ====================
+  { id: 'porsche911', name: '🇩🇪 Porsche 911 GT3 RS (Asfalto Grip RR)', weight: 1430, distribution: 40, drivetrain: 'RWD', terrain: 'road', carClass: 'S1', pi: 890 },
+  { id: 'r34', name: '🇯🇵 Nissan Skyline GT-R R34 (Godzilla AWD)', weight: 1450, distribution: 54, drivetrain: 'AWD', terrain: 'road', carClass: 'A', pi: 800 },
+  { id: 'm3e46', name: '🇩🇪 BMW M3 E46 \'05 (Asfalto Track RWD)', weight: 1450, distribution: 50, drivetrain: 'RWD', terrain: 'road', carClass: 'A', pi: 740 },
+  { id: 'corvettec8', name: '🇺🇸 Corvette C8 Stingray (Mid-Engine S1)', weight: 1530, distribution: 40, drivetrain: 'AWD', terrain: 'road', carClass: 'S1', pi: 850 },
+  { id: 'civictype', name: '🇯🇵 Honda Civic Type R (FWD Hot Hatch)', weight: 1380, distribution: 60, drivetrain: 'FWD', terrain: 'road', carClass: 'A', pi: 720 },
+  { id: 'senna18', name: '🇬🇧 McLaren Senna (Hypercar Track S2)', weight: 1300, distribution: 42, drivetrain: 'RWD', terrain: 'road', carClass: 'S2', pi: 975 },
+  { id: 'fxxkevo', name: '🇮🇹 Ferrari FXX-K Evo (Ultimate Track X)', weight: 1250, distribution: 41, drivetrain: 'RWD', terrain: 'road', carClass: 'S2', pi: 998 },
+  { id: 'huracan18', name: '🇮🇹 Lamborghini Huracán Performante', weight: 1420, distribution: 43, drivetrain: 'AWD', terrain: 'road', carClass: 'S1', pi: 880 },
+  
+  // ==================== RALLY / DIRT / OFF-ROAD ====================
   { id: 'subaruwrx', name: '🇯🇵 Subaru Impreza WRX STI (Rali AWD)', weight: 1420, distribution: 58, drivetrain: 'AWD', terrain: 'dirt', carClass: 'B', pi: 690 },
-  { id: 'civictype', name: '🇯🇵 Honda Civic Type R (FWD Drag/Track)', weight: 1380, distribution: 60, drivetrain: 'FWD', terrain: 'road', carClass: 'A', pi: 720 },
-  { id: 'porsche911', name: '🇩🇪 Porsche 911 GT3 RS (Asfalto Grip)', weight: 1430, distribution: 40, drivetrain: 'RWD', terrain: 'road', carClass: 'S1', pi: 890 }
+  { id: 'lancer9', name: '🇯🇵 Mitsubishi Lancer Evo IX (Terra AWD)', weight: 1380, distribution: 57, drivetrain: 'AWD', terrain: 'dirt', carClass: 'A', pi: 730 },
+  { id: 'quattro83', name: '🇩🇪 Audi Sport Quattro (Grupo B Lenda)', weight: 1200, distribution: 58, drivetrain: 'AWD', terrain: 'dirt', carClass: 'B', pi: 700 },
+  { id: 'bronco21', name: '🇺🇸 Ford Bronco \'21 (Off-Road Cross Country)', weight: 2000, distribution: 51, drivetrain: 'AWD', terrain: 'dirt', carClass: 'A', pi: 750 }
 ];
 
 export default function App() {
