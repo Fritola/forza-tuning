@@ -1070,9 +1070,9 @@ export default function App() {
 
   // Helper to format Gear
   const getGearLabel = (gearVal) => {
-    if (gearVal === 255 || gearVal === -1) return 'R';
-    if (gearVal === 0) return 'N';
-    if (gearVal > 0 && gearVal <= 15) return gearVal;
+    if (gearVal === 0) return 'R';
+    if (gearVal === 11) return 'N';
+    if (gearVal > 0 && gearVal <= 10) return gearVal;
     return 'N';
   };
 
@@ -1103,13 +1103,13 @@ export default function App() {
       );
     });
 
-    const gearVal = telemetry ? telemetry.gear : 0;
-    const isNeutral = gearVal === 0;
-    const isReverse = gearVal === 255 || gearVal === -1;
+    const gearVal = telemetry ? telemetry.gear : 11;
+    const isNeutral = gearVal === 11;
+    const isReverse = gearVal === 0;
 
     const getDduGearLabel = (g) => {
-      if (g === 255 || g === -1) return 'R';
-      if (g === 0 || g === undefined) return 'N';
+      if (g === 0) return 'R';
+      if (g === 11 || g === undefined) return 'N';
       return g;
     };
 
