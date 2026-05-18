@@ -2209,3 +2209,201 @@ body {
   }
 }
 
+/* Active Vehicle Summary Bar Styling */
+.active-vehicle-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 22px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
+  margin-bottom: 20px;
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+}
+
+/* Soft ambient light overlay for premium look */
+.active-vehicle-bar::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at 10% 50%, rgba(0, 243, 255, 0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.vehicle-info-left {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  flex: 1;
+}
+
+.vehicle-icon {
+  font-size: 2rem;
+  filter: drop-shadow(0 0 8px rgba(0, 243, 255, 0.4));
+  animation: floatIcon 3s ease-in-out infinite;
+}
+
+@keyframes floatIcon {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.vehicle-class-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+
+.vehicle-id-label {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-family: 'Space Mono', monospace;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.vehicle-name-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid rgba(255, 255, 255, 0.08);
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 1.15rem;
+  color: #fff;
+  padding: 3px 0;
+  width: 100%;
+  max-width: 420px;
+  outline: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  letter-spacing: 0.2px;
+}
+
+.vehicle-name-input:focus {
+  border-bottom-color: var(--color-cyan);
+  box-shadow: 0 4px 12px -4px rgba(0, 243, 255, 0.2);
+  max-width: 450px;
+}
+
+.vehicle-name-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.vehicle-status-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.pulse-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  position: relative;
+}
+
+.pulse-indicator.online {
+  background: #00ff66;
+  box-shadow: 0 0 10px #00ff66;
+}
+
+.pulse-indicator.online::after {
+  content: '';
+  position: absolute;
+  top: -4px;
+  left: -4px;
+  right: -4px;
+  bottom: -4px;
+  border-radius: 50%;
+  border: 1.5px solid #00ff66;
+  opacity: 0;
+  animation: pulseScale 1.8s infinite cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@keyframes pulseScale {
+  0% { transform: scale(0.8); opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.status-text {
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+}
+
+/* Forza Horizon Authentic Class Badges */
+.class-badge {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 4px;
+  color: #fff;
+  text-shadow: 0 1.5px 3px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.class-badge.class-d {
+  background: linear-gradient(135deg, #4caf50 0%, #2e7d32 100%);
+  border: 1px solid rgba(76, 175, 80, 0.3);
+}
+.class-badge.class-c {
+  background: linear-gradient(135deg, #ffc107 0%, #ff8f00 100%);
+  border: 1px solid rgba(255, 193, 7, 0.3);
+}
+.class-badge.class-b {
+  background: linear-gradient(135deg, #ff5722 0%, #d84315 100%);
+  border: 1px solid rgba(255, 87, 34, 0.3);
+}
+.class-badge.class-a {
+  background: linear-gradient(135deg, #e91e63 0%, #c2185b 100%);
+  border: 1px solid rgba(233, 30, 99, 0.3);
+}
+.class-badge.class-s1 {
+  background: linear-gradient(135deg, #9c27b0 0%, #6a1b9a 100%);
+  border: 1px solid rgba(156, 39, 176, 0.3);
+}
+.class-badge.class-s2 {
+  background: linear-gradient(135deg, #2196f3 0%, #1565c0 100%);
+  border: 1px solid rgba(33, 150, 243, 0.3);
+}
+.class-badge.class-x {
+  background: linear-gradient(135deg, #00e676 0%, #00a152 100%);
+  border: 1px solid rgba(0, 230, 118, 0.3);
+}
+.class-badge.class-custom {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+@media (max-width: 650px) {
+  .active-vehicle-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 15px;
+    padding: 16px;
+  }
+  .vehicle-status-right {
+    align-self: flex-end;
+  }
+  .vehicle-name-input {
+    font-size: 1.05rem;
+  }
+}
+

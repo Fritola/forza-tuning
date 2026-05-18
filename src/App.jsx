@@ -229,6 +229,51 @@ export default function App() {
     }
   });
 
+  // Custom vehicle mapping database (carOrdinal -> custom vehicle name)
+  const [carMappings, setCarMappings] = useState(() => {
+    try {
+      const stored = localStorage.getItem('forza_car_mappings');
+      return stored ? JSON.parse(stored) : {
+        1005: 'Carro de Teste (Mock)',
+        1110: 'Mazda MX-5 Miata',
+        4090: 'Audi R8 V10 Performance'
+      };
+    } catch (e) {
+      return {
+        1005: 'Carro de Teste (Mock)',
+        1110: 'Mazda MX-5 Miata',
+        4090: 'Audi R8 V10 Performance'
+      };
+    }
+  });
+
+  // Helper functions to map Forza telemetry classes to game-authentic labels and styles
+  const getCarClassLabel = (classVal) => {
+    switch (classVal) {
+      case 0: return 'D';
+      case 1: return 'C';
+      case 2: return 'B';
+      case 3: return 'A';
+      case 4: return 'S1';
+      case 5: return 'S2';
+      case 6: return 'X';
+      default: return 'PR';
+    }
+  };
+
+  const getCarClassColorClass = (classVal) => {
+    switch (classVal) {
+      case 0: return 'class-d';
+      case 1: return 'class-c';
+      case 2: return 'class-b';
+      case 3: return 'class-a';
+      case 4: return 'class-s1';
+      case 5: return 'class-s2';
+      case 6: return 'class-x';
+      default: return 'class-custom';
+    }
+  };
+
   const [bottomingOutAlert, setBottomingOutAlert] = useState(null); // 'FL', 'FR', 'RL', 'RR' or null
 
   const wsRef = useRef(null);
@@ -241,6 +286,10 @@ export default function App() {
 
   // Helper function to dynamically record finished drag timing runs in history
   const saveRunToHistory = (time100, time200) => {
+    // Dynamically retrieve the name from our custom mapping if available
+    const activeId = telemetry?.carOrdinal || 0;
+    const activeName = carMappings[activeId] || (activeId ? `Carro #${activeId}` : 'Carro Personalizado');
+
     const newRun = {
       id: 'run_' + Date.now(),
       timestamp: Date.now(),
@@ -256,7 +305,7 @@ export default function App() {
       time0_200: time200,
       maxSpeed: maxSpeedRef.current,
       maxGForce: maxGForceRef.current,
-      carName: ''
+      carName: activeName
     };
 
     setRunHistory(prev => {
@@ -1772,6 +1821,41 @@ export default function App() {
                 <div className="banner-desc">
                   O amortecedor/mola da <strong>{bottomingOutAlert}</strong> colapsou completamente (&gt;= 98%). Aumente a altura livre ou a rigidez.
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* ACTIVE VEHICLE SUMMARY BAR */}
+          {telemetry && telemetry.carOrdinal > 0 && (
+            <div className="active-vehicle-bar margin-bottom-md glass-card animate-pulse-slow">
+              <div className="vehicle-info-left">
+                <span className="vehicle-icon">🏎️</span>
+                <div style={{ flex: 1 }}>
+                  <div className="vehicle-class-row">
+                    <span className={`class-badge ${getCarClassColorClass(telemetry.carClass)}`}>
+                      {getCarClassLabel(telemetry.carClass)} {telemetry.carPerformanceIndex}
+                    </span>
+                    <span className="vehicle-id-label">ID do Carro: #{telemetry.carOrdinal}</span>
+                  </div>
+                  <input
+                    type="text"
+                    className="vehicle-name-input"
+                    value={carMappings[telemetry.carOrdinal] || ''}
+                    placeholder={`Identifique seu veículo (ex: Mazda MX-5 Miata)`}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setCarMappings(prev => {
+                        const updated = { ...prev, [telemetry.carOrdinal]: val };
+                        localStorage.setItem('forza_car_mappings', JSON.stringify(updated));
+                        return updated;
+                      });
+                    }}
+                  />
+                </div>
+              </div>
+              <div className="vehicle-status-right">
+                <span className="pulse-indicator online"></span>
+                <span className="status-text">Telemetria Forza Ativa</span>
               </div>
             </div>
           )}
