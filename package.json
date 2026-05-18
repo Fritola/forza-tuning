@@ -1,0 +1,27 @@
+{
+  "name": "forza-tuning-hub",
+  "version": "1.0.0",
+  "description": "Premium Tuning Calculator and UDP Telemetry Dashboard for Forza Horizon 6",
+  "main": "server.js",
+  "scripts": {
+    "start": "vite build && node server.js",
+    "sim": "node mock-sender.js",
+    "dev": "concurrently \"vite --host\" \"node server.js\"",
+    "compile": "pkg server.js --targets node18-win-x64 --output forza-server.exe",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "ws": "^8.17.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.3.1",
+    "concurrently": "^7.6.0",
+    "vite": "^5.4.1"
+  },
+  "author": "",
+  "license": "ISC"
+}
