@@ -269,7 +269,7 @@ export default function App() {
       case 3: return 'class-a';
       case 4: return 'class-s1';
       case 5: return 'class-s2';
-      case 6: return 'class-x';
+      case 6: return 'class-r';
       default: return 'class-custom';
     }
   };
