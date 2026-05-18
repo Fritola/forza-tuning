@@ -997,34 +997,60 @@ body {
 }
 
 /* 10. Responsive Design Media Queries */
+/* 10. Responsive Design Media Queries */
+@media (max-width: 1200px) {
+  .app-container {
+    padding: 0 10px;
+  }
+}
+
 @media (max-width: 1024px) {
   .grid-layout {
     grid-template-columns: 1fr;
+    gap: 20px;
   }
   
   .brand-main {
-    font-size: 1.8rem;
+    font-size: 1.9rem;
   }
 }
 
 @media (max-width: 768px) {
   body {
-    padding: 10px;
+    padding: 12px 8px;
   }
   
-  .tab-btn {
-    padding: 12px 10px;
-    font-size: 0.78rem;
-    gap: 6px;
+  .app-container {
+    gap: 15px;
   }
   
-  .tab-icon {
-    width: 16px;
-    height: 16px;
+  .glass-card {
+    padding: 18px;
+  }
+
+  .radial-gauges-container {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 12px;
+    width: 100%;
   }
   
+  .gauge-card {
+    padding: 12px;
+  }
+  
+  .radial-gauge {
+    width: 95px;
+    height: 95px;
+  }
+  
+  .gauge-number {
+    font-size: 1.5rem;
+  }
+
   .diagnostic-sections-grid {
     grid-template-columns: 1fr;
+    gap: 15px;
   }
   
   .footer-grid {
@@ -1035,6 +1061,92 @@ body {
   .input-bars-layout {
     grid-template-columns: 1fr;
     gap: 10px;
+  }
+}
+
+@media (max-width: 580px) {
+  .app-header {
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    text-align: center;
+    padding: 10px 5px;
+  }
+  
+  .status-panel {
+    flex-direction: column;
+    width: 100%;
+    gap: 8px;
+  }
+  
+  .status-indicator, .sim-toggle-btn {
+    width: 100%;
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .udp-autofill-banner {
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+    align-items: stretch;
+  }
+
+  .grid-columns-2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .setup-save-input-group {
+    flex-direction: column;
+  }
+
+  .btn-save {
+    width: 100%;
+    padding: 12px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .tab-navigation {
+    gap: 4px;
+    padding: 4px;
+    border-radius: var(--radius-sm);
+  }
+
+  .tab-btn {
+    flex-direction: column;
+    gap: 4px;
+    padding: 10px 4px;
+    font-size: 0.68rem;
+    text-align: center;
+    border-radius: var(--radius-sm);
+  }
+  
+  .tab-icon {
+    width: 18px;
+    height: 18px;
+  }
+
+  .input-slider-wrapper {
+    gap: 10px;
+  }
+  
+  .num-input {
+    width: 70px;
+    font-size: 0.88rem;
+    padding: 6px;
+  }
+
+  .camber-diagram {
+    padding: 16px 12px;
+    max-width: 100%;
+  }
+
+  .card-title {
+    font-size: 1.15rem;
+    margin-bottom: 15px;
+    padding-bottom: 8px;
   }
 }
 
