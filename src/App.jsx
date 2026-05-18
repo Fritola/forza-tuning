@@ -34,6 +34,110 @@ const CAR_PRESETS = [
   { id: 'bronco21', name: '🇺🇸 Ford Bronco \'21 (Off-Road Cross Country)', weight: 2000, distribution: 51, drivetrain: 'AWD', terrain: 'dirt', carClass: 'A', pi: 750 }
 ];
 
+// ==========================================
+// A. GOOGLE ADSENSE MONETIZATION COMPONENT
+// ==========================================
+function GoogleAdSenseBanner({ adClient, adSlot, isTesting = true }) {
+  useEffect(() => {
+    // Only attempt to load real Google ads if not in testing mode
+    if (!isTesting) {
+      try {
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+      } catch (err) {
+        console.warn('AdSense failed to load: ', err);
+      }
+    }
+  }, [isTesting, adSlot]);
+
+  if (isTesting) {
+    return (
+      <div 
+        className="ad-placeholder-container glass-card" 
+        style={{
+          background: 'linear-gradient(135deg, rgba(2, 242, 254, 0.02) 0%, rgba(244, 63, 94, 0.02) 100%)',
+          border: '1px dashed rgba(255, 255, 255, 0.12)',
+          borderRadius: '16px',
+          padding: '20px 30px',
+          textAlign: 'center',
+          position: 'relative',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minHeight: '100px',
+          margin: '25px 0',
+          boxShadow: 'inset 0 0 20px rgba(255,255,255,0.01)'
+        }}
+      >
+        {/* Subtle decorative glow */}
+        <div style={{
+          position: 'absolute',
+          top: '-30px',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          width: '350px',
+          height: '30px',
+          background: 'radial-gradient(circle, rgba(2, 242, 254, 0.2) 0%, transparent 70%)',
+          filter: 'blur(15px)',
+          borderRadius: '50%',
+          pointerEvents: 'none'
+        }}></div>
+
+        <span style={{ 
+          fontSize: '0.62rem', 
+          color: 'var(--text-muted)', 
+          textTransform: 'uppercase', 
+          letterSpacing: '2px',
+          marginBottom: '8px',
+          fontWeight: 800
+        }}>
+          📢 Espaço Patrocinado (Monetização Google AdSense)
+        </span>
+        
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
+          <span style={{ fontSize: '1.8rem' }}>🏎️</span>
+          <div style={{ textAlign: 'left' }}>
+            <strong style={{ fontSize: '0.9rem', color: 'var(--text-primary)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+              Forza Tuning Hub Pro <span style={{ fontSize: '0.65rem', background: 'rgba(2, 242, 254, 0.1)', color: 'var(--color-cyan)', padding: '2px 6px', borderRadius: '4px', border: '1px solid rgba(2, 242, 254, 0.2)' }}>AD READY</span>
+            </strong>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', display: 'block', marginTop: '2px' }}>
+              Seu anúncio do Google AdSense aparecerá aqui automaticamente após a aprovação da sua conta do site!
+            </span>
+          </div>
+        </div>
+
+        {/* Small debug badge */}
+        <span style={{
+          position: 'absolute',
+          bottom: '8px',
+          right: '12px',
+          fontSize: '0.55rem',
+          background: 'rgba(255,255,255,0.04)',
+          padding: '2px 8px',
+          borderRadius: '4px',
+          color: 'var(--text-muted)',
+          fontFamily: 'monospace'
+        }}>
+          Slot: {adSlot || 'ca-pub-XXXXXXXXXXXXX'}
+        </span>
+      </div>
+    );
+  }
+
+  // Real Google AdSense responsive banner unit for Production
+  return (
+    <div className="adsense-banner-container" style={{ textAlign: 'center', margin: '25px 0', overflow: 'hidden' }}>
+      <ins className="adsbygoogle"
+           style={{ display: 'block' }}
+           data-ad-client={adClient}
+           data-ad-slot={adSlot}
+           data-ad-format="auto"
+           data-full-width-responsive="true"></ins>
+    </div>
+  );
+}
+
 export default function App() {
   // ==========================================
   // 1. STATE & REF MANAGEMENT
@@ -1859,6 +1963,15 @@ export default function App() {
         </section>
 
       </main>
+
+      {/* Google AdSense Banner Slot */}
+      <div className="container ad-banner-section" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+        <GoogleAdSenseBanner 
+          adClient="ca-pub-XXXXXXXXXXXXXXXX" // Substitua pelo seu ID real quando aprovado no Google AdSense
+          adSlot="XXXXXXXXXX"               // Substitua pelo ID do seu bloco de anúncio
+          isTesting={true}                  // Mantenha TRUE para ver o lindo mockup de teste, mude para FALSE em produção!
+        />
+      </div>
 
       {/* Project Instructions / Setup Guide */}
       <footer className="app-footer glass-card">
