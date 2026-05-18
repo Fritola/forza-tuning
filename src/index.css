@@ -1673,3 +1673,351 @@ body {
   background: #151515;
   border: 1.5px solid #666;
 }
+
+/* ==========================================
+ * 11. Telemetria Avançada & Alertas Visuais
+ * ========================================== */
+
+/* Estilos de Roda com Alertas de Física */
+.chassis-wheel.wheel-spin {
+  border-color: var(--color-orange) !important;
+  box-shadow: 0 0 16px var(--color-orange) !important;
+  animation: pulse-orange-glow 0.4s infinite alternate;
+}
+
+.chassis-wheel.wheel-spin::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 100%;
+  background: repeating-linear-gradient(
+    transparent,
+    transparent 3px,
+    var(--color-orange) 3px,
+    var(--color-orange) 6px
+  );
+  transform: translateX(-50%);
+  animation: tread-flow 0.25s linear infinite !important; /* Rodando super rápido */
+  opacity: 0.95;
+}
+
+.chassis-wheel.wheel-lock {
+  border-color: hsl(0, 100%, 60%) !important;
+  box-shadow: 0 0 16px hsla(0, 100%, 50%, 0.8) !important;
+  background: hsl(0, 50%, 20%) !important;
+  animation: pulse-red-glow 0.2s infinite alternate;
+}
+
+.chassis-wheel.wheel-lock::after {
+  content: 'LOCK';
+  position: absolute;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 0.45rem;
+  color: #ff3333;
+  text-shadow: 0 0 4px #000;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: pulse-lock-text 0.2s infinite alternate;
+}
+
+@keyframes pulse-orange-glow {
+  from { box-shadow: 0 0 8px var(--color-orange); }
+  to { box-shadow: 0 0 20px var(--color-orange); }
+}
+
+@keyframes pulse-red-glow {
+  from { box-shadow: 0 0 8px hsla(0, 100%, 50%, 0.6); }
+  to { box-shadow: 0 0 24px hsla(0, 100%, 50%, 1); }
+}
+
+@keyframes pulse-lock-text {
+  from { transform: translate(-50%, -50%) scale(0.9); opacity: 0.8; }
+  to { transform: translate(-50%, -50%) scale(1.15); opacity: 1; }
+}
+
+/* Alerta de Fim de Curso da Suspensão (Bottoming Out) */
+.suspension-bottom-banner {
+  background: linear-gradient(135deg, hsla(0, 80%, 20%, 0.95), hsla(0, 95%, 30%, 0.95));
+  border: 2px solid hsl(0, 100%, 50%);
+  box-shadow: 0 0 25px rgba(255, 0, 0, 0.4);
+  color: #fff;
+  padding: 14px 20px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  font-family: 'Outfit', sans-serif;
+  animation: shake-banner 0.45s ease-out;
+}
+
+.suspension-bottom-banner .banner-icon {
+  font-size: 1.6rem;
+  animation: pulse-scale 0.4s infinite alternate;
+}
+
+.suspension-bottom-banner .banner-title {
+  font-weight: 900;
+  font-size: 0.95rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #ffcccc;
+  margin-bottom: 2px;
+}
+
+.suspension-bottom-banner .banner-desc {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.95);
+  line-height: 1.4;
+}
+
+@keyframes shake-banner {
+  0%, 100% { transform: translateX(0); }
+  15%, 55%, 85% { transform: translateX(-8px); }
+  35%, 75% { transform: translateX(8px); }
+}
+
+@keyframes pulse-scale {
+  from { transform: scale(1); }
+  to { transform: scale(1.3); }
+}
+
+/* Painel de Arrancada e Cronômetro de Performance */
+.perf-timer-panel {
+  background: var(--bg-glass);
+  border: 1px solid var(--border-glass);
+  padding: 20px;
+  border-radius: var(--radius-lg);
+  backdrop-filter: blur(15px);
+  width: 100%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.perf-timer-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 12px;
+}
+
+.perf-timer-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 1.15rem;
+  letter-spacing: 0.02em;
+  color: var(--color-cyan);
+  text-shadow: 0 0 10px var(--color-cyan-glow);
+}
+
+.perf-status-badge {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.72rem;
+  padding: 4px 12px;
+  border-radius: 50px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.perf-status-badge.idle {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  border: 1px solid var(--border-glass);
+}
+
+.perf-status-badge.running {
+  background: hsla(32, 95%, 55%, 0.15);
+  color: var(--color-orange);
+  border: 1px solid var(--color-orange);
+  animation: pulse-orange-border 1s infinite alternate;
+}
+
+.perf-status-badge.finished {
+  background: hsla(142, 70%, 45%, 0.15);
+  color: var(--color-green);
+  border: 1px solid var(--color-green);
+  box-shadow: 0 0 10px hsla(142, 70%, 45%, 0.2);
+}
+
+@keyframes pulse-orange-border {
+  from { border-color: rgba(255, 120, 0, 0.4); box-shadow: 0 0 5px rgba(255, 120, 0, 0.2); }
+  to { border-color: var(--color-orange); box-shadow: 0 0 15px rgba(255, 120, 0, 0.4); }
+}
+
+.perf-timer-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+@media (max-width: 600px) {
+  .perf-timer-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.perf-time-card {
+  background: var(--bg-deep);
+  border: 1px solid var(--border-glass);
+  border-radius: var(--radius-md);
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  position: relative;
+  overflow: hidden;
+  transition: all var(--transition-normal);
+  box-shadow: inset 0 0 12px rgba(0, 0, 0, 0.4);
+}
+
+.perf-time-card:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--bg-glass-active);
+  transform: translateY(-2px);
+}
+
+.perf-time-lbl {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.perf-time-val {
+  font-family: 'Outfit', monospace;
+  font-weight: 900;
+  font-size: 2.2rem;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+}
+
+.perf-time-val.active-time {
+  color: var(--color-orange);
+  text-shadow: 0 0 15px rgba(255, 120, 0, 0.55);
+}
+
+.perf-time-val.completed-time {
+  color: var(--color-green);
+  text-shadow: 0 0 15px hsla(142, 70%, 45%, 0.5);
+}
+
+.perf-time-best {
+  font-size: 0.72rem;
+  color: var(--color-cyan);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+}
+
+.perf-time-best strong {
+  color: #fff;
+  font-weight: 800;
+}
+
+/* Shift Light Neon Indicator */
+.shift-light-glow {
+  animation: pulse-shift-purple 0.2s infinite alternate !important;
+  border-color: var(--color-pink) !important;
+}
+
+@keyframes pulse-shift-purple {
+  from {
+    box-shadow: 0 0 15px var(--color-pink-glow);
+    background: var(--bg-deep);
+  }
+  to {
+    box-shadow: 0 0 35px var(--color-pink), inset 0 0 15px var(--color-pink-glow);
+    background: hsla(330, 100%, 55%, 0.15);
+  }
+}
+
+/* ==========================================
+ * 11. Responsive Tab Navigation Utility Classes
+ * ========================================== */
+.tab-text-desktop {
+  display: inline;
+}
+
+.tab-text-mobile {
+  display: none;
+}
+
+@media (max-width: 680px) {
+  .tab-text-desktop {
+    display: none;
+  }
+  .tab-text-mobile {
+    display: inline;
+  }
+}
+
+/* ==========================================
+ * 12. Advanced Real-Time ABS & Wheelspin Heatmap Indicators
+ * ========================================== */
+.tire-indicator.tire-lock-alert {
+  border-color: hsl(0, 100%, 60%) !important;
+  box-shadow: 0 0 20px hsla(0, 100%, 50%, 0.8), inset 0 0 15px hsla(0, 100%, 50%, 0.4) !important;
+  animation: pulse-red-glow 0.15s infinite alternate !important;
+}
+
+.tire-indicator.tire-spin-alert {
+  border-color: var(--color-orange) !important;
+  box-shadow: 0 0 20px rgba(255, 120, 0, 0.8), inset 0 0 15px rgba(255, 120, 0, 0.4) !important;
+  animation: pulse-orange-glow 0.3s infinite alternate !important;
+}
+
+.abs-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(220, 20, 60, 0.95);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1.5px solid #ff4444;
+  box-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+  z-index: 3;
+  letter-spacing: 0.08em;
+  animation: scalePulse 0.15s infinite alternate;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.spin-badge {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: rgba(255, 140, 0, 0.95);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  font-size: 0.72rem;
+  padding: 4px 8px;
+  border-radius: 4px;
+  border: 1.5px solid #ff9900;
+  box-shadow: 0 0 12px rgba(255, 140, 0, 0.6);
+  z-index: 3;
+  letter-spacing: 0.08em;
+  animation: scalePulse 0.3s infinite alternate;
+  pointer-events: none;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+@keyframes scalePulse {
+  from { transform: translate(-50%, -50%) scale(0.9); }
+  to { transform: translate(-50%, -50%) scale(1.1); }
+}
+

@@ -202,9 +202,57 @@ export default function App() {
   const [lastPacketTime, setLastPacketTime] = useState(0);
   const [isGameTelemetryRunning, setIsGameTelemetryRunning] = useState(false);
 
+  // States for advanced physics telemetry & timers
+  const [perfTimer, setPerfTimer] = useState({
+    state: 'idle', // 'idle', 'running', 'finished'
+    startTime: 0,
+    time0_100: null,
+    time0_200: null,
+  });
+
+  const [bestRecords, setBestRecords] = useState(() => {
+    try {
+      const stored = localStorage.getItem('forza_best_records');
+      return stored ? JSON.parse(stored) : { zero100: null, zero200: null };
+    } catch (e) {
+      return { zero100: null, zero200: null };
+    }
+  });
+
+  const [bottomingOutAlert, setBottomingOutAlert] = useState(null); // 'FL', 'FR', 'RL', 'RR' or null
+
   const wsRef = useRef(null);
   const canvasGForceRef = useRef(null);
   const staticUpdateCountRef = useRef(0);
+  const bottomTimeoutRef = useRef(null);
+
+  // Helper to calculate Wheelspin and ABS Lockup states dynamically
+  const getWheelStatus = (prefix) => {
+    if (!telemetry) return 'ok';
+    const speed = telemetry.speedKmh;
+    const accelInput = telemetry.accelInput;
+    const brakeInput = telemetry.brakeInput;
+    
+    // Read wheel rotation speed from telemetry
+    const rotation = telemetry[`wheelRotation${prefix}`];
+    if (rotation === undefined) return 'ok';
+    
+    const wheelRadius = 0.33;
+    const wheelKmh = Math.abs(rotation) * wheelRadius * 3.6;
+    const slip = wheelKmh - speed;
+    
+    // Wheelspin: Wheel is spinning 15+ km/h faster than vehicle speed under throttle
+    if (speed > 5 && slip > 15 && accelInput > 0.15) {
+      return 'spin';
+    }
+    
+    // ABS Lockup: Vehicle is moving, but wheel is stopped under heavy braking
+    if (speed > 25 && wheelKmh < 3 && brakeInput > 0.15) {
+      return 'lock';
+    }
+    
+    return 'ok';
+  };
 
   // ==========================================
   // 2. WEBSOCKET CONNECTION
@@ -300,6 +348,106 @@ export default function App() {
     const interval = setInterval(checkTelemetry, 1000);
     return () => clearInterval(interval);
   }, [lastPacketTime]);
+
+  // ==========================================
+  // 2.2. TELEMETRY ADVANCED PHYSICS TRACKING (0-100, WHEELSLIP & SUSPENSION ALARMS)
+  // ==========================================
+  useEffect(() => {
+    if (!telemetry) return;
+    const speed = telemetry.speedKmh;
+    const accelInput = telemetry.accelInput;
+    const now = Date.now();
+
+    // 1. Performance timing logic
+    if (perfTimer.state === 'idle') {
+      // Waiting for launch (stopped, and throttle pressed > 25%)
+      if (speed < 1 && accelInput > 0.25) {
+        setPerfTimer({
+          state: 'running',
+          startTime: now,
+          time0_100: null,
+          time0_200: null,
+        });
+      }
+    } else if (perfTimer.state === 'running') {
+      const elapsed = (now - perfTimer.startTime) / 1000;
+
+      // Detect 0 - 100 km/h
+      if (!perfTimer.time0_100 && speed >= 100) {
+        setPerfTimer(prev => ({ ...prev, time0_100: elapsed }));
+        
+        // Update best personal records
+        setBestRecords(prev => {
+          if (prev.zero100 === null || elapsed < prev.zero100) {
+            const updated = { ...prev, zero100: elapsed };
+            localStorage.setItem('forza_best_records', JSON.stringify(updated));
+            return updated;
+          }
+          return prev;
+        });
+      }
+
+      // Detect 0 - 200 km/h
+      if (!perfTimer.time0_200 && speed >= 200) {
+        setPerfTimer(prev => ({ ...prev, state: 'finished', time0_200: elapsed }));
+        
+        // Update best personal records
+        setBestRecords(prev => {
+          if (prev.zero200 === null || elapsed < prev.zero200) {
+            const updated = { ...prev, zero200: elapsed };
+            localStorage.setItem('forza_best_records', JSON.stringify(updated));
+            return updated;
+          }
+          return prev;
+        });
+      }
+
+      // Reset timer if car stops long after launch without finishing
+      if (speed < 1 && elapsed > 10 && accelInput === 0) {
+        setPerfTimer({
+          state: 'idle',
+          startTime: 0,
+          time0_100: null,
+          time0_200: null,
+        });
+      }
+    } else if (perfTimer.state === 'finished') {
+      // Auto-reset when driver slows down completely to 0 to do another run
+      if (speed < 1 && accelInput === 0) {
+        setPerfTimer({
+          state: 'idle',
+          startTime: 0,
+          time0_100: null,
+          time0_200: null,
+        });
+      }
+    }
+
+    // 2. Suspension Bottoming Out Alert Logic
+    const wheelsTravel = [
+      { id: 'Dianteira Esquerda (FL)', val: telemetry.suspensionTravelFrontLeftNorm },
+      { id: 'Dianteira Direita (FR)', val: telemetry.suspensionTravelFrontRightNorm },
+      { id: 'Traseira Esquerda (RL)', val: telemetry.suspensionTravelRearLeftNorm },
+      { id: 'Traseira Direita (RR)', val: telemetry.suspensionTravelRearRightNorm }
+    ];
+
+    const bottomed = wheelsTravel.find(w => w.val >= 0.98);
+    if (bottomed) {
+      setBottomingOutAlert(bottomed.id);
+      if (bottomTimeoutRef.current) clearTimeout(bottomTimeoutRef.current);
+      bottomTimeoutRef.current = setTimeout(() => {
+        setBottomingOutAlert(null);
+      }, 1500);
+    }
+
+  }, [telemetry, perfTimer.state, perfTimer.startTime, perfTimer.time0_100, perfTimer.time0_200]);
+
+  // Clean up suspension alarm timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (bottomTimeoutRef.current) clearTimeout(bottomTimeoutRef.current);
+    };
+  }, []);
 
   // ==========================================
   // 3. FORCE G CANVAS PLOTTER
@@ -857,30 +1005,43 @@ export default function App() {
           onClick={() => setActiveTab('tab-calculator')}
         >
           <svg className="tab-icon" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-4 6h-4v2h4v2h-4v2h4v2H9V7h6v2z" /></svg>
-          CALCULADORA DE TUNING
+          <span className="tab-text-desktop">🔧 CALCULADORA DE PRESSÃO & SUSPENSÃO</span>
+          <span className="tab-text-mobile">🔧 CALCULADORA</span>
         </button>
         <button
           className={`tab-btn ${activeTab === 'tab-dashboard' ? 'active' : ''}`}
           onClick={() => setActiveTab('tab-dashboard')}
         >
           <svg className="tab-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" /></svg>
-          HUD TELEMETRIA
+          <span className="tab-text-desktop">🎮 HUD TELEMETRIA FH6</span>
+          <span className="tab-text-mobile">🎮 TELEMETRIA</span>
         </button>
         <button
           className={`tab-btn ${activeTab === 'tab-diagnostic' ? 'active' : ''}`}
           onClick={() => setActiveTab('tab-diagnostic')}
         >
           <svg className="tab-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" /></svg>
-          DIAGNÓSTICO
+          <span className="tab-text-desktop">📊 DIAGNÓSTICO FÍSICO AUTOMÁTICO</span>
+          <span className="tab-text-mobile">📊 DIAGNÓSTICO</span>
         </button>
         <button
           className={`tab-btn ${activeTab === 'tab-tutorial' ? 'active' : ''}`}
           onClick={() => setActiveTab('tab-tutorial')}
         >
           <svg className="tab-icon" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" /></svg>
-          COMO CONECTAR
+          <span className="tab-text-desktop">📖 COMO CONECTAR AO JOGO</span>
+          <span className="tab-text-mobile">📖 CONECTAR</span>
         </button>
       </nav>
+
+      {/* Google AdSense Top Banner */}
+      <div className="container ad-banner-section-top" style={{ maxWidth: '1200px', margin: '15px auto 0 auto', padding: '0 20px' }}>
+        <GoogleAdSenseBanner 
+          adClient="ca-pub-4979675212971833"
+          adSlot="8392017482"
+          isTesting={true}
+        />
+      </div>
 
       {/* Main Content Area */}
       <main className="main-content">
@@ -1427,7 +1588,9 @@ export default function App() {
                   <div className="chassis-axle front-axle">
                     <div className="wheel-left-wrap">
                       <div 
-                        className={`chassis-wheel left-wheel ${inputs.drivetrain !== 'RWD' ? 'traction-active' : ''}`}
+                        className={`chassis-wheel left-wheel ${inputs.drivetrain !== 'RWD' ? 'traction-active' : ''} ${
+                          getWheelStatus('FL') === 'spin' ? 'wheel-spin' : getWheelStatus('FL') === 'lock' ? 'wheel-lock' : ''
+                        }`}
                         style={{ 
                           transform: `rotate(${recommendations.camberF}deg)`,
                           borderWidth: `${recommendations.tireFrontPsi < 20 ? '5px' : recommendations.tireFrontPsi > 35 ? '2px' : '3px'}`
@@ -1444,7 +1607,9 @@ export default function App() {
 
                     <div className="wheel-right-wrap">
                       <div 
-                        className={`chassis-wheel right-wheel ${inputs.drivetrain !== 'RWD' ? 'traction-active' : ''}`}
+                        className={`chassis-wheel right-wheel ${inputs.drivetrain !== 'RWD' ? 'traction-active' : ''} ${
+                          getWheelStatus('FR') === 'spin' ? 'wheel-spin' : getWheelStatus('FR') === 'lock' ? 'wheel-lock' : ''
+                        }`}
                         style={{ 
                           transform: `rotate(${-recommendations.camberF}deg)`,
                           borderWidth: `${recommendations.tireFrontPsi < 20 ? '5px' : recommendations.tireFrontPsi > 35 ? '2px' : '3px'}`
@@ -1483,7 +1648,9 @@ export default function App() {
                   <div className="chassis-axle rear-axle">
                     <div className="wheel-left-wrap">
                       <div 
-                        className={`chassis-wheel left-wheel ${inputs.drivetrain !== 'FWD' ? 'traction-active' : ''}`}
+                        className={`chassis-wheel left-wheel ${inputs.drivetrain !== 'FWD' ? 'traction-active' : ''} ${
+                          getWheelStatus('RL') === 'spin' ? 'wheel-spin' : getWheelStatus('RL') === 'lock' ? 'wheel-lock' : ''
+                        }`}
                         style={{ 
                           transform: `rotate(${recommendations.camberR}deg)`,
                           borderWidth: `${recommendations.tireRearPsi < 20 ? '5px' : recommendations.tireRearPsi > 35 ? '2px' : '3px'}`
@@ -1500,7 +1667,9 @@ export default function App() {
 
                     <div className="wheel-right-wrap">
                       <div 
-                        className={`chassis-wheel right-wheel ${inputs.drivetrain !== 'FWD' ? 'traction-active' : ''}`}
+                        className={`chassis-wheel right-wheel ${inputs.drivetrain !== 'FWD' ? 'traction-active' : ''} ${
+                          getWheelStatus('RR') === 'spin' ? 'wheel-spin' : getWheelStatus('RR') === 'lock' ? 'wheel-lock' : ''
+                        }`}
                         style={{ 
                           transform: `rotate(${-recommendations.camberR}deg)`,
                           borderWidth: `${recommendations.tireRearPsi < 20 ? '5px' : recommendations.tireRearPsi > 35 ? '2px' : '3px'}`
@@ -1535,6 +1704,71 @@ export default function App() {
 
         {/* TAB 2: LIVE TELEMETRY DASHBOARD */}
         <section id="tab-dashboard" className={`tab-pane ${activeTab === 'tab-dashboard' ? 'active' : ''}`}>
+          
+          {/* SUSPENSION BOTTOMING OUT REAL-TIME ALERT */}
+          {bottomingOutAlert && (
+            <div className="suspension-bottom-banner margin-bottom-md">
+              <span className="banner-icon">🚨</span>
+              <div>
+                <div className="banner-title">Batendo Fim de Curso da Suspensão!</div>
+                <div className="banner-desc">
+                  O amortecedor/mola da <strong>{bottomingOutAlert}</strong> colapsou completamente (&gt;= 98%). Aumente a altura livre ou a rigidez.
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* PERFORMANCE Timing Dashboard */}
+          <div className="perf-timer-panel margin-bottom-md">
+            <div className="perf-timer-header">
+              <h3 className="perf-timer-title">⏱️ Cronômetro de Arrancada de Alta Fidelidade</h3>
+              <span className={`perf-status-badge ${perfTimer.state}`}>
+                {perfTimer.state === 'idle' && 'Aguardando Largada (Acelere)'}
+                {perfTimer.state === 'running' && 'Arrancada Detectada!'}
+                {perfTimer.state === 'finished' && 'Teste Concluído'}
+              </span>
+            </div>
+            
+            <div className="perf-timer-grid">
+              <div className="perf-time-card">
+                <span className="perf-time-lbl">ACELERAÇÃO 0 - 100 KM/H</span>
+                <div className={`perf-time-val ${perfTimer.state === 'running' && !perfTimer.time0_100 ? 'active-time' : perfTimer.time0_100 ? 'completed-time' : ''}`}>
+                  {perfTimer.state === 'running' && !perfTimer.time0_100
+                    ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s`
+                    : perfTimer.time0_100
+                    ? `${perfTimer.time0_100.toFixed(2)}s`
+                    : '---'}
+                </div>
+                <div className="perf-time-best">
+                  🏆 Recorde Pessoal: <strong>{bestRecords.zero100 ? `${bestRecords.zero100.toFixed(2)}s` : 'Sem tempo'}</strong>
+                </div>
+              </div>
+
+              <div className="perf-time-card">
+                <span className="perf-time-lbl">ACELERAÇÃO 0 - 200 KM/H</span>
+                <div className={`perf-time-val ${perfTimer.state === 'running' && !perfTimer.time0_200 ? 'active-time' : perfTimer.time0_200 ? 'completed-time' : ''}`}>
+                  {perfTimer.state === 'running' && !perfTimer.time0_200
+                    ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s`
+                    : perfTimer.time0_200
+                    ? `${perfTimer.time0_200.toFixed(2)}s`
+                    : '---'}
+                </div>
+                <div className="perf-time-best">
+                  🏆 Recorde Pessoal: <strong>{bestRecords.zero200 ? `${bestRecords.zero200.toFixed(2)}s` : 'Sem tempo'}</strong>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Google AdSense Telemetry Tab Banner */}
+          <div className="ad-banner-section margin-bottom-md" style={{ width: '100%' }}>
+            <GoogleAdSenseBanner 
+              adClient="ca-pub-4979675212971833"
+              adSlot="5821034927"
+              isTesting={true}
+            />
+          </div>
+
           <div className="grid-layout">
 
             {/* LEFT HUD PANELS */}
@@ -1558,16 +1792,16 @@ export default function App() {
                       const rpm = telemetry ? telemetry.currentEngineRpm : 0;
                       const maxRpm = telemetry ? telemetry.engineMaxRpm : 8000;
                       const rpmPercent = maxRpm > 0 ? (rpm / maxRpm) * 100 : 0;
-                      const glowClass = rpmPercent > 85 ? 'glow-pink' : 'glow-cyan';
-                      const activeColor = rpmPercent > 85 ? 'var(--color-pink)' : 'var(--color-cyan)';
+                      const isShiftLight = rpmPercent > 92;
+                      const activeColor = isShiftLight ? 'var(--color-pink)' : rpmPercent > 85 ? 'var(--color-pink)' : 'var(--color-cyan)';
 
                       return (
                         <div
-                          className="radial-gauge"
+                          className={`radial-gauge ${isShiftLight ? 'shift-light-glow' : ''}`}
                           style={{
                             borderTopColor: activeColor,
                             borderRightColor: activeColor,
-                            boxShadow: rpmPercent > 85 ? '0 0 15px var(--color-pink-glow)' : '0 0 15px var(--color-cyan-glow)'
+                            boxShadow: isShiftLight ? undefined : rpmPercent > 85 ? '0 0 15px var(--color-pink-glow)' : '0 0 15px var(--color-cyan-glow)'
                           }}
                         >
                           <div className="gauge-number">{telemetry ? Math.round(rpm) : 0}</div>
@@ -1611,11 +1845,12 @@ export default function App() {
                     const loadPercent = Math.max(0, Math.min(100, (1 - travelNorm) * 100));
 
                     const tStyle = getTireStyle(temp);
+                    const wStatus = getWheelStatus(prefix.toUpperCase());
 
                     return (
                       <div
                         key={prefix}
-                        className="tire-indicator"
+                        className={`tire-indicator ${wStatus === 'lock' ? 'tire-lock-alert' : wStatus === 'spin' ? 'tire-spin-alert' : ''}`}
                         style={{
                           borderColor: tStyle.borderColor,
                           backgroundColor: tStyle.backgroundColor
@@ -1623,6 +1858,11 @@ export default function App() {
                       >
                         <span className="tire-lbl">{prefix.toUpperCase()}</span>
                         <span className="tire-temp-val">{Math.round(temp)}°C</span>
+                        
+                        {/* ABS Lock / Wheelspin Overlays */}
+                        {wStatus === 'lock' && <div className="abs-badge">🚨 ABS LOCK</div>}
+                        {wStatus === 'spin' && <div className="spin-badge">💨 SPIN</div>}
+
                         <div
                           className="tire-bar-fill"
                           style={{
@@ -1964,12 +2204,12 @@ export default function App() {
 
       </main>
 
-      {/* Google AdSense Banner Slot */}
+      {/* Google AdSense Bottom Banner */}
       <div className="container ad-banner-section" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
         <GoogleAdSenseBanner 
-          adClient="ca-pub-4979675212971833" // Seu ID de editor real
-          adSlot="XXXXXXXXXX"               // Substitua pelo ID do seu bloco de anúncio quando criar um anúncio gráfico
-          isTesting={true}                  // Mantenha TRUE para ver o lindo mockup de teste, mude para FALSE em produção!
+          adClient="ca-pub-4979675212971833"
+          adSlot="6729103847"
+          isTesting={true}
         />
       </div>
 
