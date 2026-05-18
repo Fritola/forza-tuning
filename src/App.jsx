@@ -1967,7 +1967,7 @@ export default function App() {
       {/* Google AdSense Banner Slot */}
       <div className="container ad-banner-section" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
         <GoogleAdSenseBanner 
-          adClient="ca-pub-4797675212971833" // Seu ID de editor real
+          adClient="ca-pub-4979675212971833" // Seu ID de editor real
           adSlot="XXXXXXXXXX"               // Substitua pelo ID do seu bloco de anúncio quando criar um anúncio gráfico
           isTesting={true}                  // Mantenha TRUE para ver o lindo mockup de teste, mude para FALSE em produção!
         />
