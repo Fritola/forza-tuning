@@ -4,14 +4,134 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 // TRAJECTORY MAP COMPONENT
 // ==========================================
 const MAX_TRAJECTORY_POINTS = 8000;
-
+const MAX_HISTORY_SESSIONS = 15;
+const MAX_HISTORY_POINTS = 2000; // subsampled for storage efficiency
 const TRAJECTORY_STORAGE_KEY = 'fth_trajectory_v1';
+const HISTORY_STORAGE_KEY = 'fth_trajectory_history_v1';
 
+// Palette of distinct colors for historical overlays
+const SESSION_COLORS = [
+  '#ff9800', '#e91e63', '#9c27b0', '#4caf50', '#2196f3',
+  '#ff5722', '#00bcd4', '#cddc39', '#ff4081', '#69f0ae',
+];
+
+function subsample(points, maxPoints) {
+  if (points.length <= maxPoints) return points;
+  const step = points.length / maxPoints;
+  const result = [];
+  for (let i = 0; i < maxPoints; i++) {
+    result.push(points[Math.floor(i * step)]);
+  }
+  return result;
+}
+
+function drawTrajectoryOnCanvas(ctx, points, W, H, options = {}) {
+  const {
+    pad = 20,
+    lineWidth = 2.5,
+    color = null, // if set, use fixed color; if null, use speed/brake coloring
+    alpha = 0.85,
+    minX: extMinX, maxX: extMaxX, minZ: extMinZ, maxZ: extMaxZ,
+    drawDot = true,
+  } = options;
+
+  if (points.length < 2) return;
+
+  let minX = extMinX ?? Infinity, maxX = extMaxX ?? -Infinity;
+  let minZ = extMinZ ?? Infinity, maxZ = extMaxZ ?? -Infinity;
+  if (extMinX === undefined) {
+    for (const p of points) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.z < minZ) minZ = p.z;
+      if (p.z > maxZ) maxZ = p.z;
+    }
+  }
+
+  const rangeX = maxX - minX || 1;
+  const rangeZ = maxZ - minZ || 1;
+  const scale = Math.min((W - pad * 2) / rangeX, (H - pad * 2) / rangeZ);
+  const offsetX = pad + ((W - pad * 2) - rangeX * scale) / 2;
+  const offsetZ = pad + ((H - pad * 2) - rangeZ * scale) / 2;
+
+  const toCanvas = (p) => ({
+    cx: offsetX + (p.x - minX) * scale,
+    cy: H - offsetZ - (p.z - minZ) * scale,
+  });
+
+  const maxSpeed = color ? 1 : Math.max(...points.map(p => p.speed), 1);
+
+  for (let i = 1; i < points.length; i++) {
+    const prev = toCanvas(points[i - 1]);
+    const curr = toCanvas(points[i]);
+    const p = points[i];
+
+    ctx.beginPath();
+    ctx.moveTo(prev.cx, prev.cy);
+    ctx.lineTo(curr.cx, curr.cy);
+    ctx.lineWidth = lineWidth;
+
+    if (color) {
+      ctx.strokeStyle = color;
+    } else if (p.brake > 0.3) {
+      const intensity = Math.min(1, p.brake);
+      ctx.strokeStyle = `rgba(255, ${Math.round(60 * (1 - intensity))}, ${Math.round(30 * (1 - intensity))}, ${alpha})`;
+    } else {
+      const ratio = p.speed / maxSpeed;
+      if (ratio < 0.5) {
+        const t = ratio / 0.5;
+        ctx.strokeStyle = `rgba(${Math.round(0)},${Math.round(220 + t * 23)},${Math.round(100 + t * 155)},${alpha})`;
+      } else {
+        const t = (ratio - 0.5) / 0.5;
+        ctx.strokeStyle = `rgba(${Math.round(t * 255)},${Math.round(243 - t * 193)},${Math.round(255 - t * 75)},${alpha})`;
+      }
+    }
+    ctx.stroke();
+  }
+
+  if (drawDot) {
+    const last = toCanvas(points[points.length - 1]);
+    ctx.beginPath();
+    ctx.arc(last.cx, last.cy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(last.cx, last.cy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = color || '#00f3ff';
+    ctx.fill();
+  }
+
+  return { minX, maxX, minZ, maxZ };
+}
+
+// ── Mini thumbnail canvas ──────────────────────────────────────
+function TrajectoryThumbnail({ points, color, width = 160, height = 80 }) {
+  const canvasRef = useRef(null);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas || !points || points.length < 2) return;
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, width, height);
+    drawTrajectoryOnCanvas(ctx, points, width, height, { pad: 6, lineWidth: 1.5, color, alpha: 0.9, drawDot: false });
+  }, [points, color, width, height]);
+  return (
+    <canvas
+      ref={canvasRef}
+      width={width}
+      height={height}
+      style={{ borderRadius: 4, background: 'rgba(0,0,0,0.5)', border: `1px solid ${color}33` }}
+    />
+  );
+}
+
+// ── Main hook ──────────────────────────────────────────────────
 function useTrajectory(telemetry) {
   const pointsRef = useRef([]);
   const [pointCount, setPointCount] = useState(0);
+  const [history, setHistory] = useState([]);
+  const [overlayIds, setOverlayIds] = useState([]); // session ids currently overlaid
 
-  // Load persisted trajectory from localStorage on mount
+  // Load persisted live trajectory + history on mount
   useEffect(() => {
     try {
       const saved = localStorage.getItem(TRAJECTORY_STORAGE_KEY);
@@ -22,19 +142,20 @@ function useTrajectory(telemetry) {
           setPointCount(parsed.length);
         }
       }
-    } catch (e) {
-      // ignore corrupt storage
-    }
+    } catch (e) {}
+
+    try {
+      const h = localStorage.getItem(HISTORY_STORAGE_KEY);
+      if (h) setHistory(JSON.parse(h));
+    } catch (e) {}
   }, []);
 
-  // Persist to localStorage every 50 new points to avoid thrashing
+  // Debounced save of live trajectory
   const saveTimerRef = useRef(null);
   const scheduleSave = useCallback(() => {
     if (saveTimerRef.current) return;
     saveTimerRef.current = setTimeout(() => {
-      try {
-        localStorage.setItem(TRAJECTORY_STORAGE_KEY, JSON.stringify(pointsRef.current));
-      } catch (e) { /* quota exceeded — ignore */ }
+      try { localStorage.setItem(TRAJECTORY_STORAGE_KEY, JSON.stringify(pointsRef.current)); } catch (e) {}
       saveTimerRef.current = null;
     }, 2000);
   }, []);
@@ -42,19 +163,13 @@ function useTrajectory(telemetry) {
   useEffect(() => {
     if (!telemetry || telemetry.positionX === undefined || telemetry.positionZ === undefined) return;
     if (!telemetry.isRaceOn) return;
-
     const x = telemetry.positionX;
     const z = telemetry.positionZ;
     const speed = telemetry.speedKmh || 0;
     const brake = telemetry.brakeInput || 0;
-
-    // Avoid duplicates when car is stationary
     const last = pointsRef.current[pointsRef.current.length - 1];
     if (last && Math.abs(last.x - x) < 0.3 && Math.abs(last.z - z) < 0.3) return;
-
-    if (pointsRef.current.length >= MAX_TRAJECTORY_POINTS) {
-      pointsRef.current.shift();
-    }
+    if (pointsRef.current.length >= MAX_TRAJECTORY_POINTS) pointsRef.current.shift();
     pointsRef.current.push({ x, z, speed, brake });
     setPointCount(c => c + 1);
     scheduleSave();
@@ -66,23 +181,84 @@ function useTrajectory(telemetry) {
     try { localStorage.removeItem(TRAJECTORY_STORAGE_KEY); } catch (e) {}
   }, []);
 
-  return { pointsRef, pointCount, clearTrajectory };
+  const saveSession = useCallback((carName) => {
+    if (pointsRef.current.length < 10) return false;
+    const now = new Date();
+    const dateStr = now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const pts = subsample(pointsRef.current, MAX_HISTORY_POINTS);
+    const maxSpeed = Math.max(...pts.map(p => p.speed));
+    const colorIdx = Math.floor(Math.random() * SESSION_COLORS.length);
+
+    const session = {
+      id: `session_${Date.now()}`,
+      name: carName || 'Sessão',
+      date: dateStr,
+      pointCount: pts.length,
+      maxSpeed: Math.round(maxSpeed),
+      colorIdx,
+      points: pts,
+    };
+
+    setHistory(prev => {
+      const next = [session, ...prev].slice(0, MAX_HISTORY_SESSIONS);
+      try { localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+    return true;
+  }, []);
+
+  const deleteSession = useCallback((id) => {
+    setHistory(prev => {
+      const next = prev.filter(s => s.id !== id);
+      try { localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(next)); } catch (e) {}
+      return next;
+    });
+    setOverlayIds(prev => prev.filter(oid => oid !== id));
+  }, []);
+
+  const toggleOverlay = useCallback((id) => {
+    setOverlayIds(prev =>
+      prev.includes(id) ? prev.filter(oid => oid !== id) : [...prev, id]
+    );
+  }, []);
+
+  return { pointsRef, pointCount, clearTrajectory, saveSession, history, overlayIds, toggleOverlay, deleteSession };
 }
 
-function TrajectoryMap({ pointsRef, pointCount, onClear }) {
+// ── TrajectoryMap component ─────────────────────────────────────
+function TrajectoryMap({ pointsRef, pointCount, onClear, onSave, history, overlayIds, onToggleOverlay, onDeleteSession }) {
   const canvasRef = useRef(null);
+
+  // Collect all points (live + overlaid sessions) for unified bounding box
+  const allPoints = useMemo(() => {
+    const live = pointsRef.current;
+    const historical = (history || [])
+      .filter(s => overlayIds.includes(s.id))
+      .flatMap(s => s.points);
+    return [...live, ...historical];
+  }, [pointCount, overlayIds, history, pointsRef]);
+
+  const bounds = useMemo(() => {
+    if (allPoints.length < 2) return null;
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (const p of allPoints) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.z < minZ) minZ = p.z;
+      if (p.z > maxZ) maxZ = p.z;
+    }
+    return { minX, maxX, minZ, maxZ };
+  }, [allPoints]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
-    const points = pointsRef.current;
     const W = canvas.width;
     const H = canvas.height;
-
     ctx.clearRect(0, 0, W, H);
 
-    if (points.length < 2) {
+    if (!bounds) {
       ctx.fillStyle = 'rgba(255,255,255,0.06)';
       ctx.font = '13px Inter, sans-serif';
       ctx.textAlign = 'center';
@@ -90,71 +266,23 @@ function TrajectoryMap({ pointsRef, pointCount, onClear }) {
       return;
     }
 
-    // Compute bounding box with padding
-    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
-    for (const p of points) {
-      if (p.x < minX) minX = p.x;
-      if (p.x > maxX) maxX = p.x;
-      if (p.z < minZ) minZ = p.z;
-      if (p.z > maxZ) maxZ = p.z;
-    }
-    const pad = 20;
-    const rangeX = maxX - minX || 1;
-    const rangeZ = maxZ - minZ || 1;
-    const scale = Math.min((W - pad * 2) / rangeX, (H - pad * 2) / rangeZ);
-
-    const toCanvas = (p) => ({
-      cx: pad + (p.x - minX) * scale,
-      cy: H - pad - (p.z - minZ) * scale,
+    // Draw historical overlays first (behind live)
+    (history || []).forEach(session => {
+      if (!overlayIds.includes(session.id)) return;
+      const color = SESSION_COLORS[session.colorIdx % SESSION_COLORS.length];
+      drawTrajectoryOnCanvas(ctx, session.points, W, H, {
+        color: color + 'cc',
+        lineWidth: 2,
+        drawDot: false,
+        ...bounds,
+      });
     });
 
-    // Draw path segments colored by speed / braking
-    const maxSpeed = Math.max(...points.map(p => p.speed), 1);
-    for (let i = 1; i < points.length; i++) {
-      const prev = toCanvas(points[i - 1]);
-      const curr = toCanvas(points[i]);
-      const p = points[i];
-
-      ctx.beginPath();
-      ctx.moveTo(prev.cx, prev.cy);
-      ctx.lineTo(curr.cx, curr.cy);
-      ctx.lineWidth = 2.5;
-
-      if (p.brake > 0.3) {
-        // Heavy braking = red
-        const intensity = Math.min(1, p.brake);
-        ctx.strokeStyle = `rgba(255, ${Math.round(60 * (1 - intensity))}, ${Math.round(30 * (1 - intensity))}, 0.9)`;
-      } else {
-        // Speed = green → cyan → pink gradient
-        const ratio = p.speed / maxSpeed;
-        if (ratio < 0.5) {
-          const t = ratio / 0.5;
-          const r = Math.round(0 * (1 - t) + 0 * t);
-          const g = Math.round(220 * (1 - t) + 243 * t);
-          const b = Math.round(100 * (1 - t) + 255 * t);
-          ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
-        } else {
-          const t = (ratio - 0.5) / 0.5;
-          const r = Math.round(0 * (1 - t) + 255 * t);
-          const g = Math.round(243 * (1 - t) + 50 * t);
-          const b = Math.round(255 * (1 - t) + 180 * t);
-          ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
-        }
-      }
-      ctx.stroke();
+    // Draw live trajectory on top
+    if (pointsRef.current.length >= 2) {
+      drawTrajectoryOnCanvas(ctx, pointsRef.current, W, H, { drawDot: true, ...bounds });
     }
-
-    // Draw car dot at last position
-    const last = toCanvas(points[points.length - 1]);
-    ctx.beginPath();
-    ctx.arc(last.cx, last.cy, 6, 0, Math.PI * 2);
-    ctx.fillStyle = '#ffffff';
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(last.cx, last.cy, 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#00f3ff';
-    ctx.fill();
-  }, [pointCount, pointsRef]);
+  }, [pointCount, overlayIds, history, bounds, pointsRef]);
 
   return (
     <div className="trajectory-map-card">
@@ -166,22 +294,75 @@ function TrajectoryMap({ pointsRef, pointCount, onClear }) {
           <span className="legend-item legend-pink">Rápido</span>
           <span className="legend-item legend-red">Freio</span>
         </div>
-        <button className="trajectory-clear-btn" onClick={onClear} title="Limpar trajetória">
-          🗑️ Limpar
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button className="trajectory-save-btn" onClick={onSave} title="Salvar sessão atual no histórico">
+            💾 Salvar Sessão
+          </button>
+          <button className="trajectory-clear-btn" onClick={onClear} title="Limpar trajetória atual">
+            🗑️ Limpar
+          </button>
+        </div>
       </div>
-      <canvas
-        ref={canvasRef}
-        className="trajectory-canvas"
-        width={800}
-        height={400}
-      />
+
+      <canvas ref={canvasRef} className="trajectory-canvas" width={800} height={400} />
+
       <div className="trajectory-point-count">
-        {pointCount} pontos registrados
+        {pointCount} pontos registrados ao vivo
+        {overlayIds.length > 0 && ` · ${overlayIds.length} sessão(ões) em sobreposição`}
       </div>
+
+      {/* History Panel */}
+      {history && history.length > 0 && (
+        <div className="trajectory-history">
+          <div className="trajectory-history-title">📂 Histórico de Trajetos ({history.length}/{MAX_HISTORY_SESSIONS})</div>
+          <div className="trajectory-history-list">
+            {history.map((session) => {
+              const color = SESSION_COLORS[session.colorIdx % SESSION_COLORS.length];
+              const isOverlaid = overlayIds.includes(session.id);
+              return (
+                <div key={session.id} className={`trajectory-session-card ${isOverlaid ? 'overlaid' : ''}`} style={{ borderColor: isOverlaid ? color : '' }}>
+                  <div className="session-thumbnail">
+                    <TrajectoryThumbnail points={session.points} color={color} />
+                    {isOverlaid && (
+                      <div className="session-overlay-badge" style={{ background: color }}>VISÍVEL</div>
+                    )}
+                  </div>
+                  <div className="session-info">
+                    <div className="session-name">{session.name}</div>
+                    <div className="session-meta">
+                      <span>📅 {session.date}</span>
+                      <span>📍 {session.pointCount} pts</span>
+                      <span>⚡ Vmax {session.maxSpeed} km/h</span>
+                    </div>
+                    <div className="session-color-badge" style={{ background: color }} />
+                  </div>
+                  <div className="session-actions">
+                    <button
+                      className={`session-btn ${isOverlaid ? 'active' : ''}`}
+                      style={isOverlaid ? { borderColor: color, color } : {}}
+                      onClick={() => onToggleOverlay(session.id)}
+                      title={isOverlaid ? 'Remover sobreposição' : 'Sobrepor no mapa'}
+                    >
+                      {isOverlaid ? '✓ Visível' : '👁 Ver'}
+                    </button>
+                    <button
+                      className="session-btn session-btn-delete"
+                      onClick={() => onDeleteSession(session.id)}
+                      title="Apagar sessão"
+                    >
+                      🗑
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
 
 
 // ==========================================
@@ -393,7 +574,25 @@ export default function App() {
   const [isGameTelemetryRunning, setIsGameTelemetryRunning] = useState(false);
 
   // Trajectory map hook
-  const { pointsRef: trajectoryPointsRef, pointCount: trajectoryPointCount, clearTrajectory } = useTrajectory(telemetry);
+  const {
+    pointsRef: trajectoryPointsRef,
+    pointCount: trajectoryPointCount,
+    clearTrajectory,
+    saveSession: saveTrajectorySession,
+    history: trajectoryHistory,
+    overlayIds: trajectoryOverlayIds,
+    toggleOverlay: toggleTrajectoryOverlay,
+    deleteSession: deleteTrajectorySession,
+  } = useTrajectory(telemetry);
+
+  // Save session — auto-name uses car name from telemetry if available
+  const handleSaveTrajectorySession = useCallback(() => {
+    const carName = telemetry?.carOrdinal
+      ? `Carro #${telemetry.carOrdinal}`
+      : 'Sessão';
+    const saved = saveTrajectorySession(carName);
+    if (!saved) alert('Sem dados suficientes para salvar (mínimo 10 pontos).');
+  }, [saveTrajectorySession, telemetry]);
 
   // States for advanced physics telemetry & timers
   const [perfTimer, setPerfTimer] = useState({
@@ -2581,6 +2780,11 @@ export default function App() {
               pointsRef={trajectoryPointsRef}
               pointCount={trajectoryPointCount}
               onClear={clearTrajectory}
+              onSave={handleSaveTrajectorySession}
+              history={trajectoryHistory}
+              overlayIds={trajectoryOverlayIds}
+              onToggleOverlay={toggleTrajectoryOverlay}
+              onDeleteSession={deleteTrajectorySession}
             />
 
           </div>

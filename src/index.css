@@ -3049,3 +3049,145 @@ body {
   font-family: 'Outfit', sans-serif;
   text-align: right;
 }
+
+.trajectory-save-btn {
+  background: rgba(0, 243, 255, 0.08);
+  border: 1px solid rgba(0, 243, 255, 0.25);
+  border-radius: 6px;
+  color: var(--color-cyan);
+  font-size: 0.78rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  padding: 5px 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.trajectory-save-btn:hover {
+  background: rgba(0, 243, 255, 0.18);
+  border-color: var(--color-cyan);
+  box-shadow: 0 0 12px rgba(0, 243, 255, 0.2);
+}
+
+/* History Panel */
+.trajectory-history {
+  margin-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  padding-top: 16px;
+}
+.trajectory-history-title {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.5);
+  letter-spacing: 0.5px;
+  margin-bottom: 12px;
+}
+.trajectory-history-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Session Card */
+.trajectory-session-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 10px;
+  padding: 12px 14px;
+  transition: all 0.2s ease;
+}
+.trajectory-session-card:hover {
+  background: rgba(255, 255, 255, 0.06);
+}
+.trajectory-session-card.overlaid {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.session-thumbnail {
+  position: relative;
+  flex-shrink: 0;
+}
+.session-overlay-badge {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  font-size: 0.6rem;
+  font-weight: 900;
+  font-family: 'Outfit', sans-serif;
+  color: #000;
+  padding: 2px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.session-info {
+  flex: 1;
+  min-width: 0;
+}
+.session-name {
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.85);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 4px;
+}
+.session-meta {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-family: 'Outfit', sans-serif;
+  font-size: 0.72rem;
+  color: rgba(255, 255, 255, 0.35);
+}
+.session-color-badge {
+  width: 28px;
+  height: 4px;
+  border-radius: 2px;
+  margin-top: 6px;
+}
+
+.session-actions {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.session-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 6px;
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.78rem;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  padding: 5px 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+.session-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+.session-btn.active {
+  font-weight: 800;
+}
+.session-btn-delete {
+  padding: 5px 8px;
+}
+.session-btn-delete:hover {
+  background: rgba(255, 23, 68, 0.12);
+  border-color: rgba(255, 23, 68, 0.3);
+  color: #ff1744;
+}
+
+@media (max-width: 600px) {
+  .trajectory-session-card { flex-wrap: wrap; }
+  .session-thumbnail canvas { width: 120px !important; height: 60px !important; }
+  .session-meta { gap: 6px; }
+}
