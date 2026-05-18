@@ -5,18 +5,18 @@ import React, { useState, useEffect, useRef, useMemo } from 'react';
 // ==========================================
 const CAR_PRESETS = [
   { id: 'custom', name: '⚙️ Carro Personalizado', weight: 1350, distribution: 52, drivetrain: 'AWD', terrain: 'road', carClass: 'S1', pi: 900 },
-  
+
   // ==================== DRIFT SPECIFICS ====================
   { id: 'silvia15', name: '🇯🇵 Nissan Silvia S15 (Drift Spec-R)', weight: 1250, distribution: 54, drivetrain: 'RWD', terrain: 'drift', carClass: 'A', pi: 750 },
   { id: 'supra98', name: '🇯🇵 Toyota Supra RZ \'98 (Drift/Drag 2JZ)', weight: 1500, distribution: 53, drivetrain: 'RWD', terrain: 'drift', carClass: 'A', pi: 800 },
   { id: 'mustangrtr', name: '🇺🇸 Ford Mustang RTR (Formula D)', weight: 1400, distribution: 54, drivetrain: 'RWD', terrain: 'drift', carClass: 'S1', pi: 850 },
   { id: 'rx7fd', name: '🇯🇵 Mazda RX-7 FD \'97 (Rotary Drift)', weight: 1220, distribution: 50, drivetrain: 'RWD', terrain: 'drift', carClass: 'A', pi: 780 },
-  
+
   // ==================== DRAG SPECIFICS ====================
   { id: 'gtr35', name: '🇯🇵 Nissan GT-R R35 (AWD Drag Monster)', weight: 1750, distribution: 54, drivetrain: 'AWD', terrain: 'drag', carClass: 'S1', pi: 880 },
   { id: 'charger69', name: '🇺🇸 Dodge Charger \'69 (RWD Muscle Drag)', weight: 1600, distribution: 56, drivetrain: 'RWD', terrain: 'drag', carClass: 'B', pi: 650 },
   { id: 'demon18', name: '🇺🇸 Dodge Challenger Demon (Drag King)', weight: 1850, distribution: 56, drivetrain: 'RWD', terrain: 'drag', carClass: 'S1', pi: 830 },
-  
+
   // ==================== ROAD RACING / TRACK GRIP ====================
   { id: 'porsche911', name: '🇩🇪 Porsche 911 GT3 RS (Asfalto Grip RR)', weight: 1430, distribution: 40, drivetrain: 'RWD', terrain: 'road', carClass: 'S1', pi: 890 },
   { id: 'r34', name: '🇯🇵 Nissan Skyline GT-R R34 (Godzilla AWD)', weight: 1450, distribution: 54, drivetrain: 'AWD', terrain: 'road', carClass: 'A', pi: 800 },
@@ -26,7 +26,7 @@ const CAR_PRESETS = [
   { id: 'senna18', name: '🇬🇧 McLaren Senna (Hypercar Track S2)', weight: 1300, distribution: 42, drivetrain: 'RWD', terrain: 'road', carClass: 'S2', pi: 975 },
   { id: 'fxxkevo', name: '🇮🇹 Ferrari FXX-K Evo (Ultimate Track X)', weight: 1250, distribution: 41, drivetrain: 'RWD', terrain: 'road', carClass: 'S2', pi: 998 },
   { id: 'huracan18', name: '🇮🇹 Lamborghini Huracán Performante', weight: 1420, distribution: 43, drivetrain: 'AWD', terrain: 'road', carClass: 'S1', pi: 880 },
-  
+
   // ==================== RALLY / DIRT / OFF-ROAD ====================
   { id: 'subaruwrx', name: '🇯🇵 Subaru Impreza WRX STI (Rali AWD)', weight: 1420, distribution: 58, drivetrain: 'AWD', terrain: 'dirt', carClass: 'B', pi: 690 },
   { id: 'lancer9', name: '🇯🇵 Mitsubishi Lancer Evo IX (Terra AWD)', weight: 1380, distribution: 57, drivetrain: 'AWD', terrain: 'dirt', carClass: 'A', pi: 730 },
@@ -51,8 +51,8 @@ function GoogleAdSenseBanner({ adClient, adSlot, isTesting = true }) {
 
   if (isTesting) {
     return (
-      <div 
-        className="ad-placeholder-container glass-card" 
+      <div
+        className="ad-placeholder-container glass-card"
         style={{
           background: 'linear-gradient(135deg, rgba(2, 242, 254, 0.02) 0%, rgba(244, 63, 94, 0.02) 100%)',
           border: '1px dashed rgba(255, 255, 255, 0.12)',
@@ -84,17 +84,17 @@ function GoogleAdSenseBanner({ adClient, adSlot, isTesting = true }) {
           pointerEvents: 'none'
         }}></div>
 
-        <span style={{ 
-          fontSize: '0.62rem', 
-          color: 'var(--text-muted)', 
-          textTransform: 'uppercase', 
+        <span style={{
+          fontSize: '0.62rem',
+          color: 'var(--text-muted)',
+          textTransform: 'uppercase',
           letterSpacing: '2px',
           marginBottom: '8px',
           fontWeight: 800
         }}>
           📢 Espaço Patrocinado (Monetização Google AdSense)
         </span>
-        
+
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'center', gap: '15px' }}>
           <span style={{ fontSize: '1.8rem' }}>🏎️</span>
           <div style={{ textAlign: 'left' }}>
@@ -129,11 +129,11 @@ function GoogleAdSenseBanner({ adClient, adSlot, isTesting = true }) {
   return (
     <div className="adsense-banner-container" style={{ textAlign: 'center', margin: '25px 0', overflow: 'hidden' }}>
       <ins className="adsbygoogle"
-           style={{ display: 'block' }}
-           data-ad-client={adClient}
-           data-ad-slot={adSlot}
-           data-ad-format="auto"
-           data-full-width-responsive="true"></ins>
+        style={{ display: 'block' }}
+        data-ad-client={adClient}
+        data-ad-slot={adSlot}
+        data-ad-format="auto"
+        data-full-width-responsive="true"></ins>
     </div>
   );
 }
@@ -256,7 +256,7 @@ export default function App() {
       case 3: return 'A';
       case 4: return 'S1';
       case 5: return 'S2';
-      case 6: return 'X';
+      case 6: return 'R';
       default: return 'PR';
     }
   };
@@ -283,6 +283,7 @@ export default function App() {
 
   const maxSpeedRef = useRef(0);
   const maxGForceRef = useRef(0);
+  const hasSavedRef = useRef(false); // Guard ref to prevent duplicate run saves in React rendering cycles
 
   // Helper function to dynamically record finished drag timing runs in history
   const saveRunToHistory = (time100, time200) => {
@@ -321,25 +322,25 @@ export default function App() {
     const speed = telemetry.speedKmh;
     const accelInput = telemetry.accelInput;
     const brakeInput = telemetry.brakeInput;
-    
+
     // Read wheel rotation speed from telemetry
     const rotation = telemetry[`wheelRotation${prefix}`];
     if (rotation === undefined) return 'ok';
-    
+
     const wheelRadius = 0.33;
     const wheelKmh = Math.abs(rotation) * wheelRadius * 3.6;
     const slip = wheelKmh - speed;
-    
+
     // Wheelspin: Wheel is spinning 15+ km/h faster than vehicle speed under throttle
     if (speed > 5 && slip > 15 && accelInput > 0.15) {
       return 'spin';
     }
-    
+
     // ABS Lockup: Vehicle is moving, but wheel is stopped under heavy braking
     if (speed > 25 && wheelKmh < 3 && brakeInput > 0.15) {
       return 'lock';
     }
-    
+
     return 'ok';
   };
 
@@ -350,10 +351,10 @@ export default function App() {
     let ws;
     // Se o site for aberto localmente (localhost ou IP da rede de casa), conecta no próprio IP.
     // Se for aberto na nuvem (Vercel, Netlify, etc), conecta ao servidor local rodando no PC do jogador.
-    const isLocal = window.location.hostname === 'localhost' || 
-                    window.location.hostname === '127.0.0.1' || 
-                    window.location.hostname.startsWith('192.168.') ||
-                    window.location.hostname.startsWith('10.');
+    const isLocal = window.location.hostname === 'localhost' ||
+      window.location.hostname === '127.0.0.1' ||
+      window.location.hostname.startsWith('192.168.') ||
+      window.location.hostname.startsWith('10.');
     const wsHost = isLocal ? window.location.hostname : 'localhost';
     const wsUrl = `ws://${wsHost}:3000`;
     let reconnectTimeout;
@@ -453,6 +454,7 @@ export default function App() {
       if (speed < 1 && accelInput > 0.25) {
         maxSpeedRef.current = 0;
         maxGForceRef.current = 0;
+        hasSavedRef.current = false; // Reset atomic save lock for this run
         setPerfTimer({
           state: 'running',
           startTime: now,
@@ -475,7 +477,7 @@ export default function App() {
       // Detect 0 - 100 km/h
       if (!perfTimer.time0_100 && speed >= 100) {
         setPerfTimer(prev => ({ ...prev, time0_100: elapsed }));
-        
+
         // Update best personal records
         setBestRecords(prev => {
           if (prev.zero100 === null || elapsed < prev.zero100) {
@@ -489,12 +491,18 @@ export default function App() {
 
       // Detect 0 - 200 km/h
       if (!perfTimer.time0_200 && speed >= 200) {
-        setPerfTimer(prev => {
-          const finishedTimer = { ...prev, state: 'finished', time0_200: elapsed };
-          saveRunToHistory(finishedTimer.time0_100, elapsed);
-          return finishedTimer;
-        });
-        
+        // Save using the atomic guard to avoid React updater double invocations
+        if (!hasSavedRef.current) {
+          hasSavedRef.current = true;
+          saveRunToHistory(perfTimer.time0_100 || elapsed, elapsed);
+        }
+
+        setPerfTimer(prev => ({
+          ...prev,
+          state: 'finished',
+          time0_200: elapsed
+        }));
+
         // Update best personal records
         setBestRecords(prev => {
           if (prev.zero200 === null || elapsed < prev.zero200) {
@@ -508,7 +516,8 @@ export default function App() {
 
       // Reset timer if car stops or slows down completely (save run if it hit 0-100)
       if (speed < 1 && elapsed > 1.5 && accelInput === 0) {
-        if (perfTimer.time0_100) {
+        if (perfTimer.time0_100 && !hasSavedRef.current) {
+          hasSavedRef.current = true;
           saveRunToHistory(perfTimer.time0_100, null);
         }
         setPerfTimer({
@@ -1085,21 +1094,20 @@ export default function App() {
             {simulationActive ? '🎮 DESLIGAR MOCK' : '🎮 LIGAR MOCK'}
           </button>
 
-          <div 
-            id="connection-status" 
-            className={`status-indicator ${
-              wsStatus !== 'connected' 
-                ? 'offline' 
+          <div
+            id="connection-status"
+            className={`status-indicator ${wsStatus !== 'connected'
+                ? 'offline'
                 : (simulationActive || isGameTelemetryRunning ? 'online' : 'warning')
-            }`}
+              }`}
           >
             <span className="status-dot"></span>
             <span id="status-text" className="status-label">
               {wsStatus !== 'connected'
                 ? 'SERVIDOR DESCONECTADO'
-                : (simulationActive 
-                    ? 'SIMULADOR LOCAL ATIVO' 
-                    : (isGameTelemetryRunning ? 'TELEMETRIA FH6 ATIVA / CONECTADO' : 'AGUARDANDO SINAL DO JOGO...'))}
+                : (simulationActive
+                  ? 'SIMULADOR LOCAL ATIVO'
+                  : (isGameTelemetryRunning ? 'TELEMETRIA FH6 ATIVA / CONECTADO' : 'AGUARDANDO SINAL DO JOGO...'))}
             </span>
           </div>
         </div>
@@ -1143,7 +1151,7 @@ export default function App() {
 
       {/* Google AdSense Top Banner */}
       <div className="container ad-banner-section-top" style={{ maxWidth: '1200px', margin: '15px auto 0 auto', padding: '0 20px' }}>
-        <GoogleAdSenseBanner 
+        <GoogleAdSenseBanner
           adClient="ca-pub-4979675212971833"
           adSlot="8392017482"
           isTesting={true}
@@ -1311,7 +1319,7 @@ export default function App() {
               {inputs.terrain === 'drift' && (
                 <div className="fine-tuning-section drift-tuning">
                   <h3 className="section-subtitle color-pink">⚡ Ajustes Finos de Drift</h3>
-                  
+
                   <div className="form-group">
                     <label>Estilo de Drift:</label>
                     <div className="radio-group">
@@ -1447,7 +1455,7 @@ export default function App() {
             {/* CAR SETUPS MANAGER (LOCAL STORAGE) */}
             <div className="card glass-card setups-card margin-top-md">
               <h2 className="card-title">💾 Meus Setups Salvos</h2>
-              
+
               <form onSubmit={handleSaveSetup} className="setup-save-form">
                 <div className="form-group">
                   <label htmlFor="input-setup-name">Nome do Setup:</label>
@@ -1694,11 +1702,10 @@ export default function App() {
                 <div className="camber-diagram">
                   <div className="chassis-axle front-axle">
                     <div className="wheel-left-wrap">
-                      <div 
-                        className={`chassis-wheel left-wheel ${inputs.drivetrain !== 'RWD' ? 'traction-active' : ''} ${
-                          getWheelStatus('FL') === 'spin' ? 'wheel-spin' : getWheelStatus('FL') === 'lock' ? 'wheel-lock' : ''
-                        }`}
-                        style={{ 
+                      <div
+                        className={`chassis-wheel left-wheel ${inputs.drivetrain !== 'RWD' ? 'traction-active' : ''} ${getWheelStatus('FL') === 'spin' ? 'wheel-spin' : getWheelStatus('FL') === 'lock' ? 'wheel-lock' : ''
+                          }`}
+                        style={{
                           transform: `rotate(${recommendations.camberF}deg)`,
                           borderWidth: `${recommendations.tireFrontPsi < 20 ? '5px' : recommendations.tireFrontPsi > 35 ? '2px' : '3px'}`
                         }}
@@ -1713,11 +1720,10 @@ export default function App() {
                     </div>
 
                     <div className="wheel-right-wrap">
-                      <div 
-                        className={`chassis-wheel right-wheel ${inputs.drivetrain !== 'RWD' ? 'traction-active' : ''} ${
-                          getWheelStatus('FR') === 'spin' ? 'wheel-spin' : getWheelStatus('FR') === 'lock' ? 'wheel-lock' : ''
-                        }`}
-                        style={{ 
+                      <div
+                        className={`chassis-wheel right-wheel ${inputs.drivetrain !== 'RWD' ? 'traction-active' : ''} ${getWheelStatus('FR') === 'spin' ? 'wheel-spin' : getWheelStatus('FR') === 'lock' ? 'wheel-lock' : ''
+                          }`}
+                        style={{
                           transform: `rotate(${-recommendations.camberF}deg)`,
                           borderWidth: `${recommendations.tireFrontPsi < 20 ? '5px' : recommendations.tireFrontPsi > 35 ? '2px' : '3px'}`
                         }}
@@ -1754,11 +1760,10 @@ export default function App() {
 
                   <div className="chassis-axle rear-axle">
                     <div className="wheel-left-wrap">
-                      <div 
-                        className={`chassis-wheel left-wheel ${inputs.drivetrain !== 'FWD' ? 'traction-active' : ''} ${
-                          getWheelStatus('RL') === 'spin' ? 'wheel-spin' : getWheelStatus('RL') === 'lock' ? 'wheel-lock' : ''
-                        }`}
-                        style={{ 
+                      <div
+                        className={`chassis-wheel left-wheel ${inputs.drivetrain !== 'FWD' ? 'traction-active' : ''} ${getWheelStatus('RL') === 'spin' ? 'wheel-spin' : getWheelStatus('RL') === 'lock' ? 'wheel-lock' : ''
+                          }`}
+                        style={{
                           transform: `rotate(${recommendations.camberR}deg)`,
                           borderWidth: `${recommendations.tireRearPsi < 20 ? '5px' : recommendations.tireRearPsi > 35 ? '2px' : '3px'}`
                         }}
@@ -1773,11 +1778,10 @@ export default function App() {
                     </div>
 
                     <div className="wheel-right-wrap">
-                      <div 
-                        className={`chassis-wheel right-wheel ${inputs.drivetrain !== 'FWD' ? 'traction-active' : ''} ${
-                          getWheelStatus('RR') === 'spin' ? 'wheel-spin' : getWheelStatus('RR') === 'lock' ? 'wheel-lock' : ''
-                        }`}
-                        style={{ 
+                      <div
+                        className={`chassis-wheel right-wheel ${inputs.drivetrain !== 'FWD' ? 'traction-active' : ''} ${getWheelStatus('RR') === 'spin' ? 'wheel-spin' : getWheelStatus('RR') === 'lock' ? 'wheel-lock' : ''
+                          }`}
+                        style={{
                           transform: `rotate(${-recommendations.camberR}deg)`,
                           borderWidth: `${recommendations.tireRearPsi < 20 ? '5px' : recommendations.tireRearPsi > 35 ? '2px' : '3px'}`
                         }}
@@ -1811,7 +1815,7 @@ export default function App() {
 
         {/* TAB 2: LIVE TELEMETRY DASHBOARD */}
         <section id="tab-dashboard" className={`tab-pane ${activeTab === 'tab-dashboard' ? 'active' : ''}`}>
-          
+
           {/* SUSPENSION BOTTOMING OUT REAL-TIME ALERT */}
           {bottomingOutAlert && (
             <div className="suspension-bottom-banner margin-bottom-md">
@@ -1870,7 +1874,7 @@ export default function App() {
                 {perfTimer.state === 'finished' && 'Teste Concluído'}
               </span>
             </div>
-            
+
             <div className="perf-dashboard-layout">
               {/* Left Column: Active Timers & Controls */}
               <div className="perf-timers-section">
@@ -1881,8 +1885,8 @@ export default function App() {
                       {perfTimer.state === 'running' && !perfTimer.time0_100
                         ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s`
                         : perfTimer.time0_100
-                        ? `${perfTimer.time0_100.toFixed(2)}s`
-                        : '---'}
+                          ? `${perfTimer.time0_100.toFixed(2)}s`
+                          : '---'}
                     </div>
                     <div className="perf-time-best">
                       🏆 Recorde Pessoal: <strong>{bestRecords.zero100 ? `${bestRecords.zero100.toFixed(2)}s` : 'Sem tempo'}</strong>
@@ -1895,8 +1899,8 @@ export default function App() {
                       {perfTimer.state === 'running' && !perfTimer.time0_200
                         ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s`
                         : perfTimer.time0_200
-                        ? `${perfTimer.time0_200.toFixed(2)}s`
-                        : '---'}
+                          ? `${perfTimer.time0_200.toFixed(2)}s`
+                          : '---'}
                     </div>
                     <div className="perf-time-best">
                       🏆 Recorde Pessoal: <strong>{bestRecords.zero200 ? `${bestRecords.zero200.toFixed(2)}s` : 'Sem tempo'}</strong>
@@ -1905,7 +1909,7 @@ export default function App() {
                 </div>
 
                 <div className="perf-actions-row">
-                  <button 
+                  <button
                     className="btn btn-secondary btn-sm"
                     style={{ fontSize: '0.78rem', padding: '5px 12px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}
                     onClick={() => {
@@ -1989,7 +1993,7 @@ export default function App() {
 
           {/* Google AdSense Telemetry Tab Banner */}
           <div className="ad-banner-section margin-bottom-md" style={{ width: '100%' }}>
-            <GoogleAdSenseBanner 
+            <GoogleAdSenseBanner
               adClient="ca-pub-4979675212971833"
               adSlot="5821034927"
               isTesting={true}
@@ -2085,7 +2089,7 @@ export default function App() {
                       >
                         <span className="tire-lbl">{prefix.toUpperCase()}</span>
                         <span className="tire-temp-val">{Math.round(temp)}°C</span>
-                        
+
                         {/* ABS Lock / Wheelspin Overlays */}
                         {wStatus === 'lock' && <div className="abs-badge">🚨 ABS LOCK</div>}
                         {wStatus === 'spin' && <div className="spin-badge">💨 SPIN</div>}
@@ -2294,7 +2298,7 @@ export default function App() {
             </p>
 
             <div className="setup-layout-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '25px', marginTop: '20px' }}>
-              
+
               {/* PC SERVER SETUP WIZARD (FOR BEGINNERS) */}
               <div className="setup-card" style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid var(--border-glass)', padding: '24px', borderRadius: 'var(--radius-lg)' }}>
                 <h3 style={{ color: 'var(--color-cyan)', fontFamily: 'Outfit', fontWeight: 800, fontSize: '1.2rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -2311,11 +2315,11 @@ export default function App() {
                     <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>
                       Baixe e instale a versão <strong>LTS</strong> recomendada. É grátis e seguro!
                     </span>
-                    <a 
-                      href="https://nodejs.org/" 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      className="btn btn-primary" 
+                    <a
+                      href="https://nodejs.org/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn btn-primary"
                       style={{ fontSize: '0.7rem', padding: '6px 12px', display: 'inline-block', textDecoration: 'none', background: 'linear-gradient(135deg, #02f2fe 0%, #007adf 100%)' }}
                     >
                       Acessar nodejs.org ➔
@@ -2391,11 +2395,11 @@ export default function App() {
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', lineHeight: '1.6' }}>
                     Para pilotar tendo o seu celular como painel de telemetria auxiliar do seu cockpit, certifique-se de que ele está conectado ao **mesmo Wi-Fi** do computador e abra o link abaixo no navegador do celular:
                   </p>
-                  
+
                   {/* Dynamic interactive link */}
                   <div style={{ marginTop: '14px', background: 'var(--bg-deep)', padding: '12px 18px', borderRadius: '8px', display: 'inline-flex', alignItems: 'center', gap: '10px', border: '1px solid var(--border-glass)' }}>
                     <span className="pulse-dot" style={{ backgroundColor: 'var(--color-green)', width: '8px', height: '8px', borderRadius: '50%' }}></span>
-                    <a 
+                    <a
                       href={`http://${tutorialIps && tutorialIps.length > 0 ? tutorialIps[0] : '192.168.15.85'}:5173/`}
                       target="_blank"
                       rel="noopener noreferrer"
@@ -2433,7 +2437,7 @@ export default function App() {
 
       {/* Google AdSense Bottom Banner */}
       <div className="container ad-banner-section" style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-        <GoogleAdSenseBanner 
+        <GoogleAdSenseBanner
           adClient="ca-pub-4979675212971833"
           adSlot="6729103847"
           isTesting={true}
