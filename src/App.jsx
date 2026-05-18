@@ -275,6 +275,7 @@ export default function App() {
   };
 
   const [bottomingOutAlert, setBottomingOutAlert] = useState(null); // 'FL', 'FR', 'RL', 'RR' or null
+  const [cockpitModeActive, setCockpitModeActive] = useState(false); // Immersive full-screen cockpit DDU overlay
 
   const wsRef = useRef(null);
   const canvasGForceRef = useRef(null);
@@ -1074,6 +1075,190 @@ export default function App() {
     return 'N';
   };
 
+  // Immersive Cockpit DDU Mode early return rendering
+  if (cockpitModeActive) {
+    const maxRpm = telemetry?.engineMaxRpm > 0 ? telemetry.engineMaxRpm : 8000;
+    const rpmPercent = telemetry ? Math.min(100, Math.max(0, (telemetry.currentEngineRpm / maxRpm) * 100)) : 0;
+    const isRedline = telemetry ? (telemetry.currentEngineRpm >= maxRpm * 0.95) : false;
+
+    // Calculate LEDs starting from 55% to 100% of RPM (authentic shift light range)
+    const rpmRangePercent = telemetry ? Math.min(100, Math.max(0, ((telemetry.currentEngineRpm - maxRpm * 0.55) / (maxRpm * 0.45)) * 100)) : 0;
+    const activeLedsCount = Math.floor((rpmRangePercent / 100) * 20);
+
+    const ledBulbs = Array.from({ length: 20 }, (_, index) => {
+      let activeClass = '';
+      const isActive = index < activeLedsCount;
+      if (isActive) {
+        if (index < 8) activeClass = 'active-green';
+        else if (index < 14) activeClass = 'active-yellow';
+        else if (index < 18) activeClass = 'active-red';
+        else activeClass = 'active-blue';
+      }
+      return (
+        <div
+          key={index}
+          className={`ddu-led-bulb ${activeClass}`}
+        />
+      );
+    });
+
+    const gearVal = telemetry ? telemetry.gear : 11;
+    const isNeutral = gearVal === 11;
+    const isReverse = gearVal === 0;
+
+    const getDduGearLabel = (g) => {
+      if (g === 0) return 'R';
+      if (g === 11 || g === undefined) return 'N';
+      return g;
+    };
+
+    const throttlePercent = telemetry ? Math.round((telemetry.accelInput || 0) * 100) : 0;
+    const brakePercent = telemetry ? Math.round((telemetry.brakeInput || 0) * 100) : 0;
+
+    const dotLeft = telemetry ? Math.min(92, Math.max(8, 50 + (telemetry.accelX * 35))) : 50;
+    const dotTop = telemetry ? Math.min(92, Math.max(8, 50 - (telemetry.accelZ * 35))) : 50;
+
+    const suspFL = telemetry ? Math.round(telemetry.suspensionTravelFrontLeftNorm * 100) : 0;
+    const suspFR = telemetry ? Math.round(telemetry.suspensionTravelFrontRightNorm * 100) : 0;
+    const suspRL = telemetry ? Math.round(telemetry.suspensionTravelRearLeftNorm * 100) : 0;
+    const suspRR = telemetry ? Math.round(telemetry.suspensionTravelRearRightNorm * 100) : 0;
+
+    const getDduTireHeatClass = (temp) => {
+      if (temp < 60) return 'heat-cold';
+      if (temp < 90) return 'heat-optimal';
+      if (temp < 110) return 'heat-hot';
+      return 'heat-overheated';
+    };
+
+    const tires = [
+      { key: 'FL', label: 'FL', temp: telemetry ? telemetry.tireTempFL : 20, slip: getWheelStatus('FL') },
+      { key: 'FR', label: 'FR', temp: telemetry ? telemetry.tireTempFR : 20, slip: getWheelStatus('FR') },
+      { key: 'RL', label: 'RL', temp: telemetry ? telemetry.tireTempRL : 20, slip: getWheelStatus('RL') },
+      { key: 'RR', label: 'RR', temp: telemetry ? telemetry.tireTempRR : 20, slip: getWheelStatus('RR') },
+    ];
+
+    const activeCarName = telemetry?.carOrdinal > 0
+      ? (carMappings[telemetry.carOrdinal] || `Carro #${telemetry.carOrdinal}`)
+      : 'Carro Personalizado';
+
+    return (
+      <div className="cockpit-ddu-overlay">
+        {/* Dynamic Shift LED Bar */}
+        <div className={`ddu-shift-lights ${isRedline ? 'rpm-critical' : ''}`}>
+          {ledBulbs}
+        </div>
+
+        <div className="ddu-grid">
+          {/* Left Wing: G-Force radar & suspension */}
+          <div className="ddu-panel">
+            <span className="ddu-panel-title">🎯 Medidor de Força G</span>
+            <div className="ddu-gforce-radar">
+              <div className="ddu-gforce-cross-x"></div>
+              <div className="ddu-gforce-cross-y"></div>
+              <div className="ddu-gforce-ring one-g"></div>
+              <div className="ddu-gforce-dot" style={{ left: `${dotLeft}%`, top: `${dotTop}%` }}></div>
+            </div>
+            <div className="ddu-g-label">
+              Lat: <strong>{telemetry ? telemetry.accelX.toFixed(2) : '0.00'}G</strong> | Long: <strong>{telemetry ? telemetry.accelZ.toFixed(2) : '0.00'}G</strong>
+            </div>
+
+            <span className="ddu-panel-title" style={{ marginTop: 'auto' }}>🛞 Curso da Suspensão</span>
+            <div className="ddu-susp-grid">
+              <div className="ddu-susp-bar-container">
+                <span className="ddu-susp-lbl">DE</span>
+                <div className="ddu-susp-track">
+                  <div className="ddu-susp-fill" style={{ height: `${suspFL}%` }}></div>
+                </div>
+              </div>
+              <div className="ddu-susp-bar-container">
+                <span className="ddu-susp-lbl">DD</span>
+                <div className="ddu-susp-track">
+                  <div className="ddu-susp-fill" style={{ height: `${suspFR}%` }}></div>
+                </div>
+              </div>
+              <div className="ddu-susp-bar-container">
+                <span className="ddu-susp-lbl">TE</span>
+                <div className="ddu-susp-track">
+                  <div className="ddu-susp-fill" style={{ height: `${suspRL}%` }}></div>
+                </div>
+              </div>
+              <div className="ddu-susp-bar-container">
+                <span className="ddu-susp-lbl">TD</span>
+                <div className="ddu-susp-track">
+                  <div className="ddu-susp-fill" style={{ height: `${suspRR}%` }}></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Central Cluster: Gear & Speed */}
+          <div className="ddu-panel ddu-center-panel" style={{ background: 'rgba(5, 5, 10, 0.9)', borderColor: 'rgba(0, 243, 255, 0.15)', boxShadow: '0 0 20px rgba(0, 0, 0, 0.4)' }}>
+            {/* Pedals visual feedback bars */}
+            <div className="ddu-pedal-indicators throttle" title={`Aceleração: ${throttlePercent}%`}>
+              <div className="ddu-pedal-fill throttle" style={{ height: `${throttlePercent}%` }}></div>
+            </div>
+            <div className="ddu-pedal-indicators brake" title={`Frenagem: ${brakePercent}%`}>
+              <div className="ddu-pedal-fill brake" style={{ height: `${brakePercent}%` }}></div>
+            </div>
+
+            <div className="ddu-center-cluster">
+              <div className={`ddu-gear-display ${isNeutral ? 'neutral' : isReverse ? 'reverse' : ''}`}>
+                {getDduGearLabel(gearVal)}
+              </div>
+              <div className="ddu-speed-row">
+                <span className="ddu-speed-val">{telemetry ? Math.round(telemetry.speedKmh) : 0}</span>
+                <span className="ddu-speed-unit">km/h</span>
+              </div>
+              <div className="ddu-rpm-digital">
+                RPM: <strong>{telemetry ? Math.round(telemetry.currentEngineRpm) : 0}</strong> / {Math.round(maxRpm)}
+              </div>
+            </div>
+          </div>
+
+          {/* Right Wing: Tires Heat & Slip Status */}
+          <div className="ddu-panel">
+            <span className="ddu-panel-title">🌡️ Temperatura & Aderência Pneus</span>
+            <div className="ddu-tires-grid">
+              {tires.map(t => {
+                const heatClass = getDduTireHeatClass(t.temp);
+                return (
+                  <div key={t.key} className={`ddu-tire-card ${heatClass}`}>
+                    <span className="ddu-tire-lbl">{t.key}</span>
+                    <span className="ddu-tire-temp">{Math.round(t.temp)}<span>°C</span></span>
+                    {t.slip !== 'ok' && (
+                      <span className={`ddu-tire-sliplabel ${t.slip}`}>
+                        {t.slip === 'lock' ? 'ABS LOCK' : 'WHEEL SPIN'}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {/* DDU Footer / Bottom Bar */}
+        <div className="ddu-footer">
+          <div className="ddu-footer-left">
+            <span className="ddu-car-name">🏎️ {activeCarName}</span>
+            {telemetry && telemetry.carClass !== undefined && (
+              <span className={`class-badge ${getCarClassColorClass(telemetry.carClass)}`} style={{ fontSize: '0.65rem', padding: '2px 8px', margin: 0 }}>
+                {getCarClassLabel(telemetry.carClass)} {telemetry.carPerformanceIndex}
+              </span>
+            )}
+          </div>
+          <div className="ddu-footer-center">
+            <span className="ddu-timer-item">0-100 km/h: <strong>{perfTimer.time0_100 ? `${perfTimer.time0_100.toFixed(2)}s` : perfTimer.state === 'running' && perfTimer.startTime ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s` : '---'}</strong></span>
+            <span className="ddu-timer-item">0-200 km/h: <strong>{perfTimer.time0_200 ? `${perfTimer.time0_200.toFixed(2)}s` : perfTimer.state === 'running' && perfTimer.startTime ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s` : '---'}</strong></span>
+          </div>
+          <button onClick={() => setCockpitModeActive(false)} className="ddu-exit-btn">
+            🚪 Sair do Modo Cockpit
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="app-container">
 
@@ -1815,6 +2000,24 @@ export default function App() {
 
         {/* TAB 2: LIVE TELEMETRY DASHBOARD */}
         <section id="tab-dashboard" className={`tab-pane ${activeTab === 'tab-dashboard' ? 'active' : ''}`}>
+
+          {/* COCKPIT DDU MODE QUICK LINK */}
+          <div className="cockpit-launcher-bar margin-bottom-md glass-card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 18px', border: '1px solid rgba(0, 243, 255, 0.15)', background: 'linear-gradient(135deg, rgba(10,10,16,0.8) 0%, rgba(0,243,255,0.05) 100%)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.4rem' }}>📺</span>
+              <div>
+                <strong style={{ fontSize: '0.86rem', color: '#fff', display: 'block' }}>Modo Cockpit Imersivo (DDU)</strong>
+                <span style={{ fontSize: '0.74rem', color: 'var(--text-muted)' }}>Otimizado para celulares deitados ou tablets fixados no volante.</span>
+              </div>
+            </div>
+            <button
+              onClick={() => setCockpitModeActive(true)}
+              className="btn btn-primary btn-sm"
+              style={{ fontSize: '0.78rem', padding: '6px 14px', background: 'var(--color-cyan)', color: '#000', fontWeight: 800 }}
+            >
+              LIGAR COCKPIT
+            </button>
+          </div>
 
           {/* SUSPENSION BOTTOMING OUT REAL-TIME ALERT */}
           {bottomingOutAlert && (

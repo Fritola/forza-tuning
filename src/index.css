@@ -2412,3 +2412,550 @@ body {
   }
 }
 
+/* ==========================================
+   MODO COCKPIT DIGITAL DDU (Landscape Overlay)
+   ========================================== */
+.cockpit-ddu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: #050508;
+  z-index: 99999;
+  font-family: 'Outfit', sans-serif;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  padding: 12px 20px;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* LED Shift Lights dynamic panel */
+.ddu-shift-lights {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  height: 24px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 4px 8px;
+  box-sizing: border-box;
+  margin-bottom: 12px;
+}
+
+.ddu-led-bulb {
+  flex: 1;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  transition: all 0.1s ease;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.5);
+}
+
+/* LED Levels */
+.ddu-led-bulb.active-green {
+  background: #00e676;
+  box-shadow: 0 0 12px #00e676, inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.ddu-led-bulb.active-yellow {
+  background: #ffb300;
+  box-shadow: 0 0 12px #ffb300, inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.ddu-led-bulb.active-red {
+  background: #ff1744;
+  box-shadow: 0 0 12px #ff1744, inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.ddu-led-bulb.active-blue {
+  background: #00e5ff;
+  box-shadow: 0 0 12px #00e5ff, inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+.ddu-shift-lights.rpm-critical {
+  animation: dduRpmFlash 0.15s infinite alternate;
+}
+
+@keyframes dduRpmFlash {
+  0% { background: rgba(213, 0, 249, 0.1); border-color: rgba(213, 0, 249, 0.4); }
+  100% { background: rgba(213, 0, 249, 0.6); border-color: #d500f9; box-shadow: 0 0 15px rgba(213, 0, 249, 0.5); }
+}
+
+.ddu-shift-lights.rpm-critical .ddu-led-bulb {
+  background: #d500f9;
+  box-shadow: 0 0 15px #d500f9, inset 0 1px 1px rgba(255, 255, 255, 0.5);
+}
+
+/* Primary Grid Layout */
+.ddu-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 310px 1fr 310px;
+  gap: 15px;
+  min-height: 0;
+  margin-bottom: 12px;
+}
+
+/* Panel structures */
+.ddu-panel {
+  background: rgba(10, 10, 16, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 12px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  position: relative;
+}
+
+.ddu-panel-title {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Center Cluster */
+.ddu-center-cluster {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.ddu-gear-display {
+  font-size: 8rem;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1;
+  font-family: 'Inter', sans-serif;
+  text-shadow: 0 0 25px rgba(255, 255, 255, 0.15);
+  margin-bottom: -5px;
+  transition: color 0.15s ease;
+}
+
+.ddu-gear-display.neutral {
+  color: #ffb300;
+  text-shadow: 0 0 25px rgba(255, 179, 0, 0.35);
+}
+
+.ddu-gear-display.reverse {
+  color: #ff1744;
+  text-shadow: 0 0 25px rgba(255, 23, 68, 0.35);
+}
+
+.ddu-speed-row {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.ddu-speed-val {
+  font-size: 3.5rem;
+  font-weight: 800;
+  color: var(--color-cyan-glow);
+  font-family: 'Inter', sans-serif;
+  text-shadow: 0 0 15px rgba(0, 243, 255, 0.3);
+  line-height: 1;
+}
+
+.ddu-speed-unit {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.ddu-rpm-digital {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  letter-spacing: 0.5px;
+  margin-top: 5px;
+}
+
+.ddu-rpm-digital strong {
+  color: #fff;
+}
+
+/* Pedals Telemetry */
+.ddu-pedal-indicators {
+  position: absolute;
+  top: 15px;
+  bottom: 15px;
+  width: 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.ddu-pedal-indicators.throttle {
+  left: 20px;
+}
+
+.ddu-pedal-indicators.brake {
+  right: 20px;
+}
+
+.ddu-pedal-fill {
+  width: 100%;
+  transition: height 0.05s linear;
+}
+
+.ddu-pedal-fill.throttle {
+  background: linear-gradient(to top, #2e7d32, #00ff66);
+  box-shadow: 0 0 8px rgba(0, 255, 102, 0.4);
+}
+
+.ddu-pedal-fill.brake {
+  background: linear-gradient(to top, #b71c1c, #ff1744);
+  box-shadow: 0 0 8px rgba(255, 23, 68, 0.4);
+}
+
+/* G-Force Radar */
+.ddu-gforce-radar {
+  width: 130px;
+  height: 130px;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.08);
+  margin: 0 auto;
+  position: relative;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.02) 20%, rgba(0, 0, 0, 0.4) 100%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ddu-gforce-cross-x {
+  position: absolute;
+  width: 100%;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ddu-gforce-cross-y {
+  position: absolute;
+  height: 100%;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.ddu-gforce-ring {
+  position: absolute;
+  border: 1px dashed rgba(255, 255, 255, 0.04);
+  border-radius: 50%;
+}
+
+.ddu-gforce-ring.one-g {
+  width: 66%;
+  height: 66%;
+}
+
+.ddu-gforce-dot {
+  width: 12px;
+  height: 12px;
+  background: var(--color-cyan);
+  border-radius: 50%;
+  position: absolute;
+  z-index: 5;
+  box-shadow: 0 0 10px var(--color-cyan), 0 0 20px var(--color-cyan-glow);
+  transform: translate(-50%, -50%);
+  transition: left 0.06s ease-out, top 0.06s ease-out;
+}
+
+.ddu-g-label {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  text-align: center;
+  margin-top: 8px;
+  font-weight: 600;
+}
+
+.ddu-g-label strong {
+  color: #fff;
+}
+
+/* Suspension travel bar */
+.ddu-susp-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.ddu-susp-bar-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.ddu-susp-lbl {
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  font-weight: 700;
+}
+
+.ddu-susp-track {
+  width: 8px;
+  height: 42px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 2px;
+  position: relative;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.ddu-susp-fill {
+  width: 100%;
+  background: var(--color-cyan-glow);
+  box-shadow: 0 0 6px var(--color-cyan-glow);
+  transition: height 0.05s linear;
+}
+
+.ddu-susp-fill.bottomed {
+  background: #ff1744;
+  box-shadow: 0 0 8px #ff1744;
+}
+
+/* Tires Heat Map */
+.ddu-tires-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px 25px;
+  position: relative;
+  margin: auto 0;
+  padding: 0 10px;
+}
+
+.ddu-tire-card {
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.03);
+  border-radius: 6px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+/* Tire color markers based on heat */
+.ddu-tire-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 4px;
+  border-top-left-radius: 6px;
+  border-bottom-left-radius: 6px;
+}
+
+.ddu-tire-card.heat-cold::before {
+  background: #00e5ff;
+  box-shadow: 0 0 6px #00e5ff;
+}
+
+.ddu-tire-card.heat-optimal::before {
+  background: #00e676;
+  box-shadow: 0 0 6px #00e676;
+}
+
+.ddu-tire-card.heat-hot::before {
+  background: #ffb300;
+  box-shadow: 0 0 6px #ffb300;
+}
+
+.ddu-tire-card.heat-overheated::before {
+  background: #ff1744;
+  box-shadow: 0 0 6px #ff1744;
+}
+
+.ddu-tire-lbl {
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.ddu-tire-temp {
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #fff;
+  line-height: 1.2;
+}
+
+.ddu-tire-temp span {
+  font-size: 0.7rem;
+  font-weight: 400;
+  color: var(--text-muted);
+}
+
+.ddu-tire-sliplabel {
+  font-size: 0.58rem;
+  font-weight: 700;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-top: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+}
+
+.ddu-tire-sliplabel.slipping {
+  background: rgba(255, 23, 68, 0.15);
+  color: #ff1744;
+  border: 1px solid rgba(255, 23, 68, 0.35);
+  animation: dduBlink 0.4s infinite alternate;
+}
+
+@keyframes dduBlink {
+  0% { opacity: 0.5; }
+  100% { opacity: 1; }
+}
+
+/* Footer HUD info */
+.ddu-footer {
+  height: 48px;
+  background: rgba(10, 10, 16, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+  box-sizing: border-box;
+}
+
+.ddu-footer-left {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.ddu-car-name {
+  font-weight: 700;
+  font-size: 0.82rem;
+  color: #fff;
+}
+
+.ddu-footer-center {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.ddu-timer-item {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+}
+
+.ddu-timer-item strong {
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  margin-left: 3px;
+}
+
+.ddu-exit-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #fff;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.78rem;
+  padding: 6px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.ddu-exit-btn:hover {
+  background: rgba(255, 23, 68, 0.1);
+  border-color: rgba(255, 23, 68, 0.3);
+  color: #ff1744;
+  box-shadow: 0 0 10px rgba(255, 23, 68, 0.2);
+}
+
+/* Responsiveness in Landscape devices */
+@media (max-height: 520px) {
+  .cockpit-ddu-overlay {
+    padding: 6px 12px;
+  }
+  .ddu-shift-lights {
+    margin-bottom: 6px;
+    height: 18px;
+    padding: 2px 4px;
+  }
+  .ddu-grid {
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .ddu-panel {
+    padding: 8px;
+  }
+  .ddu-gear-display {
+    font-size: 4.8rem;
+  }
+  .ddu-speed-val {
+    font-size: 2.2rem;
+  }
+  .ddu-gforce-radar {
+    width: 90px;
+    height: 90px;
+  }
+  .ddu-g-label {
+    margin-top: 4px;
+    font-size: 0.65rem;
+  }
+  .ddu-susp-grid {
+    gap: 6px;
+    padding-top: 6px;
+  }
+  .ddu-susp-track {
+    height: 28px;
+  }
+  .ddu-tires-grid {
+    gap: 6px 12px;
+  }
+  .ddu-tire-card {
+    padding: 4px 6px;
+  }
+  .ddu-tire-temp {
+    font-size: 0.9rem;
+  }
+  .ddu-footer {
+    height: 38px;
+    padding: 0 10px;
+  }
+  .ddu-exit-btn {
+    padding: 4px 10px;
+    font-size: 0.72rem;
+  }
+}
+
+
