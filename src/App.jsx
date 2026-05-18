@@ -1,4 +1,156 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+
+// ==========================================
+// TRAJECTORY MAP COMPONENT
+// ==========================================
+const MAX_TRAJECTORY_POINTS = 8000;
+
+function useTrajectory(telemetry) {
+  const pointsRef = useRef([]);
+  const [pointCount, setPointCount] = useState(0);
+
+  useEffect(() => {
+    if (!telemetry || telemetry.positionX === undefined || telemetry.positionZ === undefined) return;
+    if (!telemetry.isRaceOn) return;
+
+    const x = telemetry.positionX;
+    const z = telemetry.positionZ;
+    const speed = telemetry.speedKmh || 0;
+    const brake = telemetry.brakeInput || 0;
+
+    // Avoid duplicates when car is stationary
+    const last = pointsRef.current[pointsRef.current.length - 1];
+    if (last && Math.abs(last.x - x) < 0.3 && Math.abs(last.z - z) < 0.3) return;
+
+    if (pointsRef.current.length >= MAX_TRAJECTORY_POINTS) {
+      pointsRef.current.shift();
+    }
+    pointsRef.current.push({ x, z, speed, brake });
+    setPointCount(c => c + 1);
+  }, [telemetry]);
+
+  const clearTrajectory = useCallback(() => {
+    pointsRef.current = [];
+    setPointCount(0);
+  }, []);
+
+  return { pointsRef, pointCount, clearTrajectory };
+}
+
+function TrajectoryMap({ pointsRef, pointCount, onClear }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    const points = pointsRef.current;
+    const W = canvas.width;
+    const H = canvas.height;
+
+    ctx.clearRect(0, 0, W, H);
+
+    if (points.length < 2) {
+      ctx.fillStyle = 'rgba(255,255,255,0.06)';
+      ctx.font = '13px Inter, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Aguardando posição do carro...', W / 2, H / 2);
+      return;
+    }
+
+    // Compute bounding box with padding
+    let minX = Infinity, maxX = -Infinity, minZ = Infinity, maxZ = -Infinity;
+    for (const p of points) {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.z < minZ) minZ = p.z;
+      if (p.z > maxZ) maxZ = p.z;
+    }
+    const pad = 20;
+    const rangeX = maxX - minX || 1;
+    const rangeZ = maxZ - minZ || 1;
+    const scale = Math.min((W - pad * 2) / rangeX, (H - pad * 2) / rangeZ);
+
+    const toCanvas = (p) => ({
+      cx: pad + (p.x - minX) * scale,
+      cy: H - pad - (p.z - minZ) * scale,
+    });
+
+    // Draw path segments colored by speed / braking
+    const maxSpeed = Math.max(...points.map(p => p.speed), 1);
+    for (let i = 1; i < points.length; i++) {
+      const prev = toCanvas(points[i - 1]);
+      const curr = toCanvas(points[i]);
+      const p = points[i];
+
+      ctx.beginPath();
+      ctx.moveTo(prev.cx, prev.cy);
+      ctx.lineTo(curr.cx, curr.cy);
+      ctx.lineWidth = 2.5;
+
+      if (p.brake > 0.3) {
+        // Heavy braking = red
+        const intensity = Math.min(1, p.brake);
+        ctx.strokeStyle = `rgba(255, ${Math.round(60 * (1 - intensity))}, ${Math.round(30 * (1 - intensity))}, 0.9)`;
+      } else {
+        // Speed = green → cyan → pink gradient
+        const ratio = p.speed / maxSpeed;
+        if (ratio < 0.5) {
+          const t = ratio / 0.5;
+          const r = Math.round(0 * (1 - t) + 0 * t);
+          const g = Math.round(220 * (1 - t) + 243 * t);
+          const b = Math.round(100 * (1 - t) + 255 * t);
+          ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
+        } else {
+          const t = (ratio - 0.5) / 0.5;
+          const r = Math.round(0 * (1 - t) + 255 * t);
+          const g = Math.round(243 * (1 - t) + 50 * t);
+          const b = Math.round(255 * (1 - t) + 180 * t);
+          ctx.strokeStyle = `rgba(${r},${g},${b},0.85)`;
+        }
+      }
+      ctx.stroke();
+    }
+
+    // Draw car dot at last position
+    const last = toCanvas(points[points.length - 1]);
+    ctx.beginPath();
+    ctx.arc(last.cx, last.cy, 6, 0, Math.PI * 2);
+    ctx.fillStyle = '#ffffff';
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(last.cx, last.cy, 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#00f3ff';
+    ctx.fill();
+  }, [pointCount, pointsRef]);
+
+  return (
+    <div className="trajectory-map-card">
+      <div className="trajectory-map-header">
+        <span className="trajectory-map-title">🗺️ Mapa de Trajetória em Tempo Real</span>
+        <div className="trajectory-legend">
+          <span className="legend-item legend-green">Lento</span>
+          <span className="legend-item legend-cyan">Médio</span>
+          <span className="legend-item legend-pink">Rápido</span>
+          <span className="legend-item legend-red">Freio</span>
+        </div>
+        <button className="trajectory-clear-btn" onClick={onClear} title="Limpar trajetória">
+          🗑️ Limpar
+        </button>
+      </div>
+      <canvas
+        ref={canvasRef}
+        className="trajectory-canvas"
+        width={800}
+        height={400}
+      />
+      <div className="trajectory-point-count">
+        {pointCount} pontos registrados
+      </div>
+    </div>
+  );
+}
+
 
 // ==========================================
 // 0. CAR PRESETS DATABASE
@@ -201,6 +353,9 @@ export default function App() {
   const [tutorialIps, setTutorialIps] = useState(['127.0.0.1']);
   const [lastPacketTime, setLastPacketTime] = useState(0);
   const [isGameTelemetryRunning, setIsGameTelemetryRunning] = useState(false);
+
+  // Trajectory map hook
+  const { pointsRef: trajectoryPointsRef, pointCount: trajectoryPointCount, clearTrajectory } = useTrajectory(telemetry);
 
   // States for advanced physics telemetry & timers
   const [perfTimer, setPerfTimer] = useState({
@@ -2380,6 +2535,13 @@ export default function App() {
                 </div>
               </div>
             </div>
+
+            {/* TRAJECTORY MAP */}
+            <TrajectoryMap
+              pointsRef={trajectoryPointsRef}
+              pointCount={trajectoryPointCount}
+              onClear={clearTrajectory}
+            />
 
           </div>
         </section>

@@ -106,9 +106,14 @@ function startLocalSimulation() {
     
     // V2 Data Out
     // Position (X, Y, Z) - offset 244 to 256 (12 bytes)
-    buf.writeFloatLE(0.0, 244);
+    // Simulate an oval/circuit path using parametric equations
+    const trackRadius = 200;
+    const trackAngle = (simTime * simSpeed * 0.003);
+    const simX = trackRadius * Math.cos(trackAngle) + trackRadius * 0.5 * Math.cos(trackAngle * 2);
+    const simZ = trackRadius * Math.sin(trackAngle) + trackRadius * 0.3 * Math.sin(trackAngle * 3);
+    buf.writeFloatLE(simX, 244);
     buf.writeFloatLE(0.0, 248);
-    buf.writeFloatLE(0.0, 252);
+    buf.writeFloatLE(simZ, 252);
 
     buf.writeFloatLE(simSpeed, 256);
     buf.writeFloatLE(simThrottle * 550000, 260);
@@ -264,6 +269,11 @@ function parseForzaTelemetry(msg) {
 
   // V2 / "Data Out" extensions (Usually 311 or 324 bytes)
   if (msg.length >= 311) {
+    // Absolute world position (meters)
+    telemetry.positionX = readFloat(244);
+    telemetry.positionY = readFloat(248);
+    telemetry.positionZ = readFloat(252);
+
     // Speed (m/s to km/h)
     telemetry.speedKmh = readFloat(256) * 3.6;
     
