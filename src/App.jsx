@@ -219,12 +219,52 @@ export default function App() {
     }
   });
 
+  // Drag Racing history state list (stores up to 50 runs in local storage)
+  const [runHistory, setRunHistory] = useState(() => {
+    try {
+      const stored = localStorage.getItem('forza_run_history');
+      return stored ? JSON.parse(stored) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   const [bottomingOutAlert, setBottomingOutAlert] = useState(null); // 'FL', 'FR', 'RL', 'RR' or null
 
   const wsRef = useRef(null);
   const canvasGForceRef = useRef(null);
   const staticUpdateCountRef = useRef(0);
   const bottomTimeoutRef = useRef(null);
+
+  const maxSpeedRef = useRef(0);
+  const maxGForceRef = useRef(0);
+
+  // Helper function to dynamically record finished drag timing runs in history
+  const saveRunToHistory = (time100, time200) => {
+    const newRun = {
+      id: 'run_' + Date.now(),
+      timestamp: Date.now(),
+      date: new Date().toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit'
+      }),
+      time0_100: time100,
+      time0_200: time200,
+      maxSpeed: maxSpeedRef.current,
+      maxGForce: maxGForceRef.current,
+      carName: ''
+    };
+
+    setRunHistory(prev => {
+      const updated = [newRun, ...prev].slice(0, 50);
+      localStorage.setItem('forza_run_history', JSON.stringify(updated));
+      return updated;
+    });
+  };
 
   // Helper to calculate Wheelspin and ABS Lockup states dynamically
   const getWheelStatus = (prefix) => {
@@ -362,6 +402,8 @@ export default function App() {
     if (perfTimer.state === 'idle') {
       // Waiting for launch (stopped, and throttle pressed > 25%)
       if (speed < 1 && accelInput > 0.25) {
+        maxSpeedRef.current = 0;
+        maxGForceRef.current = 0;
         setPerfTimer({
           state: 'running',
           startTime: now,
@@ -371,6 +413,15 @@ export default function App() {
       }
     } else if (perfTimer.state === 'running') {
       const elapsed = (now - perfTimer.startTime) / 1000;
+
+      // Track max speed and longitudinal G-Force (accelZ)
+      if (speed > maxSpeedRef.current) {
+        maxSpeedRef.current = speed;
+      }
+      const currentG = Math.abs(telemetry.accelZ);
+      if (currentG > maxGForceRef.current) {
+        maxGForceRef.current = currentG;
+      }
 
       // Detect 0 - 100 km/h
       if (!perfTimer.time0_100 && speed >= 100) {
@@ -389,7 +440,11 @@ export default function App() {
 
       // Detect 0 - 200 km/h
       if (!perfTimer.time0_200 && speed >= 200) {
-        setPerfTimer(prev => ({ ...prev, state: 'finished', time0_200: elapsed }));
+        setPerfTimer(prev => {
+          const finishedTimer = { ...prev, state: 'finished', time0_200: elapsed };
+          saveRunToHistory(finishedTimer.time0_100, elapsed);
+          return finishedTimer;
+        });
         
         // Update best personal records
         setBestRecords(prev => {
@@ -402,8 +457,11 @@ export default function App() {
         });
       }
 
-      // Reset timer if car stops long after launch without finishing
-      if (speed < 1 && elapsed > 10 && accelInput === 0) {
+      // Reset timer if car stops or slows down completely (save run if it hit 0-100)
+      if (speed < 1 && elapsed > 1.5 && accelInput === 0) {
+        if (perfTimer.time0_100) {
+          saveRunToHistory(perfTimer.time0_100, null);
+        }
         setPerfTimer({
           state: 'idle',
           startTime: 0,
@@ -1729,33 +1787,118 @@ export default function App() {
               </span>
             </div>
             
-            <div className="perf-timer-grid">
-              <div className="perf-time-card">
-                <span className="perf-time-lbl">ACELERAÇÃO 0 - 100 KM/H</span>
-                <div className={`perf-time-val ${perfTimer.state === 'running' && !perfTimer.time0_100 ? 'active-time' : perfTimer.time0_100 ? 'completed-time' : ''}`}>
-                  {perfTimer.state === 'running' && !perfTimer.time0_100
-                    ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s`
-                    : perfTimer.time0_100
-                    ? `${perfTimer.time0_100.toFixed(2)}s`
-                    : '---'}
+            <div className="perf-dashboard-layout">
+              {/* Left Column: Active Timers & Controls */}
+              <div className="perf-timers-section">
+                <div className="perf-timer-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '15px' }}>
+                  <div className="perf-time-card" style={{ marginBottom: 0 }}>
+                    <span className="perf-time-lbl">ACELERAÇÃO 0 - 100 KM/H</span>
+                    <div className={`perf-time-val ${perfTimer.state === 'running' && !perfTimer.time0_100 ? 'active-time' : perfTimer.time0_100 ? 'completed-time' : ''}`}>
+                      {perfTimer.state === 'running' && !perfTimer.time0_100
+                        ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s`
+                        : perfTimer.time0_100
+                        ? `${perfTimer.time0_100.toFixed(2)}s`
+                        : '---'}
+                    </div>
+                    <div className="perf-time-best">
+                      🏆 Recorde Pessoal: <strong>{bestRecords.zero100 ? `${bestRecords.zero100.toFixed(2)}s` : 'Sem tempo'}</strong>
+                    </div>
+                  </div>
+
+                  <div className="perf-time-card" style={{ marginBottom: 0 }}>
+                    <span className="perf-time-lbl">ACELERAÇÃO 0 - 200 KM/H</span>
+                    <div className={`perf-time-val ${perfTimer.state === 'running' && !perfTimer.time0_200 ? 'active-time' : perfTimer.time0_200 ? 'completed-time' : ''}`}>
+                      {perfTimer.state === 'running' && !perfTimer.time0_200
+                        ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s`
+                        : perfTimer.time0_200
+                        ? `${perfTimer.time0_200.toFixed(2)}s`
+                        : '---'}
+                    </div>
+                    <div className="perf-time-best">
+                      🏆 Recorde Pessoal: <strong>{bestRecords.zero200 ? `${bestRecords.zero200.toFixed(2)}s` : 'Sem tempo'}</strong>
+                    </div>
+                  </div>
                 </div>
-                <div className="perf-time-best">
-                  🏆 Recorde Pessoal: <strong>{bestRecords.zero100 ? `${bestRecords.zero100.toFixed(2)}s` : 'Sem tempo'}</strong>
+
+                <div className="perf-actions-row">
+                  <button 
+                    className="btn btn-secondary btn-sm"
+                    style={{ fontSize: '0.78rem', padding: '5px 12px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                    onClick={() => {
+                      if (window.confirm('Deseja limpar todos os recordes pessoais de tempo?')) {
+                        setBestRecords({ zero100: null, zero200: null });
+                        localStorage.removeItem('forza_best_records');
+                      }
+                    }}
+                  >
+                    🗑️ Limpar Recordes
+                  </button>
                 </div>
               </div>
 
-              <div className="perf-time-card">
-                <span className="perf-time-lbl">ACELERAÇÃO 0 - 200 KM/H</span>
-                <div className={`perf-time-val ${perfTimer.state === 'running' && !perfTimer.time0_200 ? 'active-time' : perfTimer.time0_200 ? 'completed-time' : ''}`}>
-                  {perfTimer.state === 'running' && !perfTimer.time0_200
-                    ? `${((Date.now() - perfTimer.startTime) / 1000).toFixed(2)}s`
-                    : perfTimer.time0_200
-                    ? `${perfTimer.time0_200.toFixed(2)}s`
-                    : '---'}
-                </div>
-                <div className="perf-time-best">
-                  🏆 Recorde Pessoal: <strong>{bestRecords.zero200 ? `${bestRecords.zero200.toFixed(2)}s` : 'Sem tempo'}</strong>
-                </div>
+              {/* Right Column: Historical Ledger */}
+              <div className="perf-history-section border-left">
+                <h4 className="history-section-title">📊 Histórico Recente & Comparações</h4>
+                {runHistory.length === 0 ? (
+                  <div className="history-empty-state">
+                    Nenhuma arrancada registrada ainda. Acelere até 100 ou 200 km/h para salvar!
+                  </div>
+                ) : (
+                  <div className="history-list-scroll">
+                    {runHistory.map(run => (
+                      <div key={run.id} className="history-item-card">
+                        <div className="history-item-header">
+                          <input
+                            type="text"
+                            placeholder="Nome do Carro (ex: Skyline R34)"
+                            value={run.carName || ''}
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              setRunHistory(prev => {
+                                const updated = prev.map(r => r.id === run.id ? { ...r, carName: val } : r);
+                                localStorage.setItem('forza_run_history', JSON.stringify(updated));
+                                return updated;
+                              });
+                            }}
+                            className="history-car-input"
+                          />
+                          <button
+                            className="history-delete-btn"
+                            title="Excluir arrancada"
+                            onClick={() => {
+                              if (window.confirm('Excluir esta arrancada da lista de comparação?')) {
+                                setRunHistory(prev => {
+                                  const updated = prev.filter(r => r.id !== run.id);
+                                  localStorage.setItem('forza_run_history', JSON.stringify(updated));
+                                  return updated;
+                                });
+                              }
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                        <div className="history-item-body">
+                          <div className="history-stat">
+                            <span>0-100:</span> <strong>{run.time0_100 ? `${run.time0_100.toFixed(2)}s` : '---'}</strong>
+                          </div>
+                          <div className="history-stat">
+                            <span>0-200:</span> <strong>{run.time0_200 ? `${run.time0_200.toFixed(2)}s` : '---'}</strong>
+                          </div>
+                          <div className="history-stat">
+                            <span>Pico G:</span> <strong>{run.maxGForce ? `${run.maxGForce.toFixed(2)}G` : '---'}</strong>
+                          </div>
+                          <div className="history-stat">
+                            <span>Vel Max:</span> <strong>{run.maxSpeed ? `${Math.round(run.maxSpeed)} km/h` : '---'}</strong>
+                          </div>
+                        </div>
+                        <div className="history-item-footer">
+                          📅 {run.date}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
           </div>

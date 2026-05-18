@@ -2021,3 +2021,191 @@ body {
   to { transform: translate(-50%, -50%) scale(1.1); }
 }
 
+/* ==========================================
+ * 13. Drag Performance Run History Styling
+ * ========================================== */
+.perf-dashboard-layout {
+  display: grid;
+  grid-template-columns: 2fr 1.2fr;
+  gap: 20px;
+  margin-top: 15px;
+}
+
+.perf-timers-section {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+.perf-actions-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.perf-history-section {
+  padding-left: 20px;
+  display: flex;
+  flex-direction: column;
+  max-height: 250px;
+}
+
+.perf-history-section.border-left {
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.history-section-title {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 800;
+  font-size: 0.9rem;
+  color: var(--color-cyan);
+  text-transform: uppercase;
+  margin-bottom: 12px;
+  letter-spacing: 0.05em;
+}
+
+.history-empty-state {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 30px 10px;
+  text-align: center;
+  border: 1.5px dashed rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.15);
+}
+
+.history-list-scroll {
+  overflow-y: auto;
+  flex: 1;
+  padding-right: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Custom scrollbar for history list */
+.history-list-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.history-list-scroll::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.01);
+}
+.history-list-scroll::-webkit-scrollbar-thumb {
+  background: rgba(0, 243, 255, 0.3);
+  border-radius: 2px;
+}
+.history-list-scroll::-webkit-scrollbar-thumb:hover {
+  background: var(--color-cyan-glow);
+}
+
+.history-item-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  transition: all 0.2s ease;
+}
+
+.history-item-card:hover {
+  background: rgba(255, 255, 255, 0.04);
+  border-color: rgba(0, 243, 255, 0.3);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.history-item-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 6px;
+}
+
+.history-car-input {
+  background: transparent;
+  border: none;
+  border-bottom: 1.5px solid transparent;
+  font-family: 'Outfit', sans-serif;
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #fff;
+  padding: 1px 0;
+  flex: 1;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.history-car-input:focus {
+  border-bottom-color: var(--color-cyan);
+}
+
+.history-car-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
+  font-size: 0.75rem;
+}
+
+.history-delete-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 0 3px;
+  line-height: 1;
+  transition: color 0.2s ease;
+}
+
+.history-delete-btn:hover {
+  color: #ff4444;
+}
+
+.history-item-body {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+
+.history-stat {
+  font-size: 0.74rem;
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+.history-stat strong {
+  color: #fff;
+}
+
+.history-item-footer {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  text-align: right;
+}
+
+@media (max-width: 900px) {
+  .perf-dashboard-layout {
+    grid-template-columns: 1fr;
+    gap: 15px;
+  }
+  .perf-history-section {
+    padding-left: 0;
+    border-left: none;
+    padding-top: 15px;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    max-height: 200px;
+  }
+  .perf-history-section.border-left {
+    border-left: none;
+  }
+}
+
