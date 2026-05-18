@@ -5,9 +5,39 @@ import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react'
 // ==========================================
 const MAX_TRAJECTORY_POINTS = 8000;
 
+const TRAJECTORY_STORAGE_KEY = 'fth_trajectory_v1';
+
 function useTrajectory(telemetry) {
   const pointsRef = useRef([]);
   const [pointCount, setPointCount] = useState(0);
+
+  // Load persisted trajectory from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(TRAJECTORY_STORAGE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          pointsRef.current = parsed;
+          setPointCount(parsed.length);
+        }
+      }
+    } catch (e) {
+      // ignore corrupt storage
+    }
+  }, []);
+
+  // Persist to localStorage every 50 new points to avoid thrashing
+  const saveTimerRef = useRef(null);
+  const scheduleSave = useCallback(() => {
+    if (saveTimerRef.current) return;
+    saveTimerRef.current = setTimeout(() => {
+      try {
+        localStorage.setItem(TRAJECTORY_STORAGE_KEY, JSON.stringify(pointsRef.current));
+      } catch (e) { /* quota exceeded — ignore */ }
+      saveTimerRef.current = null;
+    }, 2000);
+  }, []);
 
   useEffect(() => {
     if (!telemetry || telemetry.positionX === undefined || telemetry.positionZ === undefined) return;
@@ -27,11 +57,13 @@ function useTrajectory(telemetry) {
     }
     pointsRef.current.push({ x, z, speed, brake });
     setPointCount(c => c + 1);
-  }, [telemetry]);
+    scheduleSave();
+  }, [telemetry, scheduleSave]);
 
   const clearTrajectory = useCallback(() => {
     pointsRef.current = [];
     setPointCount(0);
+    try { localStorage.removeItem(TRAJECTORY_STORAGE_KEY); } catch (e) {}
   }, []);
 
   return { pointsRef, pointCount, clearTrajectory };
@@ -294,7 +326,13 @@ export default function App() {
   // ==========================================
   // 1. STATE & REF MANAGEMENT
   // ==========================================
-  const [activeTab, setActiveTab] = useState('tab-calculator');
+  const [activeTab, setActiveTabState] = useState(
+    () => localStorage.getItem('fth_active_tab') || 'tab-calculator'
+  );
+  const setActiveTab = useCallback((tab) => {
+    setActiveTabState(tab);
+    try { localStorage.setItem('fth_active_tab', tab); } catch (e) {}
+  }, []);
 
   // Vehicle Inputs State
   const [inputs, setInputs] = useState({
@@ -2412,7 +2450,9 @@ export default function App() {
                             boxShadow: isShiftLight ? undefined : rpmPercent > 85 ? '0 0 15px var(--color-pink-glow)' : '0 0 15px var(--color-cyan-glow)'
                           }}
                         >
-                          <div className="gauge-number">{telemetry ? Math.round(rpm) : 0}</div>
+                          <div className="gauge-number" style={{ fontSize: rpm >= 10000 ? '1.3rem' : '1.8rem' }}>
+                            {telemetry ? (rpm >= 1000 ? `${(rpm / 1000).toFixed(1)}k` : Math.round(rpm)) : 0}
+                          </div>
                           <div className="gauge-unit">RPM</div>
                         </div>
                       );
