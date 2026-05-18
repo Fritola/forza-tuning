@@ -1911,12 +1911,10 @@ export default function App() {
                 <div className="perf-actions-row">
                   <button
                     className="btn btn-secondary btn-sm"
-                    style={{ fontSize: '0.78rem', padding: '5px 12px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)' }}
+                    style={{ fontSize: '0.78rem', padding: '5px 12px', background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', cursor: 'pointer' }}
                     onClick={() => {
-                      if (window.confirm('Deseja limpar todos os recordes pessoais de tempo?')) {
-                        setBestRecords({ zero100: null, zero200: null });
-                        localStorage.removeItem('forza_best_records');
-                      }
+                      setBestRecords({ zero100: null, zero200: null });
+                      localStorage.removeItem('forza_best_records');
                     }}
                   >
                     🗑️ Limpar Recordes
@@ -1926,7 +1924,29 @@ export default function App() {
 
               {/* Right Column: Historical Ledger */}
               <div className="perf-history-section border-left">
-                <h4 className="history-section-title">📊 Histórico Recente & Comparações</h4>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+                  <h4 className="history-section-title" style={{ margin: 0 }}>📊 Histórico Recente & Comparações</h4>
+                  {runHistory.length > 0 && (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      style={{
+                        fontSize: '0.7rem',
+                        padding: '3px 8px',
+                        background: 'rgba(244, 63, 94, 0.1)',
+                        border: '1px solid rgba(244, 63, 94, 0.2)',
+                        color: 'var(--color-pink)',
+                        borderRadius: '4px',
+                        cursor: 'pointer'
+                      }}
+                      onClick={() => {
+                        setRunHistory([]);
+                        localStorage.removeItem('forza_run_history');
+                      }}
+                    >
+                      🗑️ Limpar Tudo
+                    </button>
+                  )}
+                </div>
                 {runHistory.length === 0 ? (
                   <div className="history-empty-state">
                     Nenhuma arrancada registrada ainda. Acelere até 100 ou 200 km/h para salvar!
@@ -1954,13 +1974,11 @@ export default function App() {
                             className="history-delete-btn"
                             title="Excluir arrancada"
                             onClick={() => {
-                              if (window.confirm('Excluir esta arrancada da lista de comparação?')) {
-                                setRunHistory(prev => {
-                                  const updated = prev.filter(r => r.id !== run.id);
-                                  localStorage.setItem('forza_run_history', JSON.stringify(updated));
-                                  return updated;
-                                });
-                              }
+                              setRunHistory(prev => {
+                                const updated = prev.filter(r => r.id !== run.id);
+                                localStorage.setItem('forza_run_history', JSON.stringify(updated));
+                                return updated;
+                              });
                             }}
                           >
                             ×
