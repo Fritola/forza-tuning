@@ -1,4 +1,88 @@
-# 🏎️ Forza Horizon 6 - Tuning Hub & Telemetria
+# 🏎️ Forza Horizon 6 - Tuning Hub & Telemetry
+
+[English](#english) | [Português](#português)
+
+---
+
+## English
+
+Welcome to the **Forza Horizon 6 Tuning Hub**! This is a real-time premium telemetry dashboard and professional tuning calculator for your game.
+
+With it, you can track tire temperature (in Celsius), acceleration/cornering G-forces, steering percentage, engaged gear, and dynamic throttle/brake usage directly on your computer, tablet, or **smartphone**!
+
+---
+
+## 📋 Quick Start Guide
+
+There are two ways to start your telemetry dashboard: the easiest way (using the ready-made executable) or running directly from the source code (for developers).
+
+---
+
+### 🟢 Option A: Use the Executable (Easiest)
+If you downloaded the final version (Release), you don't need to install anything complicated!
+
+1. Extract the downloaded file.
+2. Ensure the **`dist`** folder is in the same directory as the **`forza-server.exe`** file.
+3. Double-click on **`forza-server.exe`**!
+   *A black window will open, indicating that the server is online.*
+4. Open your browser (Chrome, Edge, etc.) on your PC and access: **`http://localhost:5173/`**
+5. **To access on your phone/tablet**: Simply connect to the same Wi-Fi as your computer and type the IP address shown in the black window into your mobile browser (e.g., `http://192.168.15.85:5173`).
+
+---
+
+### 🔵 Option B: Run Directly from the Repository (Requires Node.js)
+If you downloaded the entire source code or want to modify the dashboard, follow these steps:
+
+1. Install **[Node.js](https://nodejs.org/)** on your computer (LTS version).
+2. Open the `forza-tuning-hub` project folder.
+3. In the folder's address bar, type **`cmd`** and press **Enter** to open the terminal.
+4. Type the following command to install the dependencies (only needed the first time):
+   ```bash
+   npm install
+   ```
+5. To start the dashboard, type:
+   ```bash
+   npm run dev
+   ```
+   *The dashboard will load automatically and show the addresses (Local and Network) for you to access on your PC or phone.*
+
+---
+
+## 🎮 Step 5: Configure your Forza Horizon
+
+Now we need to make the game send data to the dashboard.
+
+1. Open your **Forza Horizon 4, 5, or 6** on PC or Xbox.
+2. Go to **Options** (Settings) -> **HUD and Gameplay**.
+3. Scroll to the bottom of the page and adjust the following options:
+   - **Data Out**: Change to **ON**.
+   - **Data Out IP Address**:
+     - If you play on the **same PC** where you started the dashboard: Type **`127.0.0.1`**
+     - If you play on **Xbox**: Type your **computer's IP** (the number from Step 4, like `192.168.15.85`).
+   - **Data Out Port**: Type **`9999`**.
+
+---
+
+## 🏁 All Set! How to Use?
+
+1. Get into a car and start driving in the game!
+2. The dashboard on your phone or computer will detect the connection automatically and show a green light saying: **TELEMETRIA FH6 ATIVA / CONECTADO** (or active/connected).
+3. **Dynamic Gauges:**
+   - **Tires:** The dashboard shows real-time temperature. Cold tires are **Cyan**, ideal grip temperature is **Green**, and overheated from drifting are **Pink**.
+   - **Steering and G-Force:** The dot on the graph moves according to the centripetal force in corners, ideal for tuning suspension and anti-roll bars.
+   - **Gears and Pedals:** See the pressure you apply to the throttle and brake instantly!
+
+---
+
+### 🧪 Testing Tip (Without the Game Running)
+Want to test the dashboard to see how it reacts without having to open the game?
+Just click the **🎮 LIGAR MOCK** (TURN ON MOCK) button at the top of the dashboard. It will simulate a test run with perfect cornering and dynamic gear shifts for you to see the magic happen!
+
+Perfect tunes and happy racing! 🏎️💨
+
+---
+
+## Português
 
 Bem-vindo ao **Forza Horizon 6 Tuning Hub**! Este é um painel de telemetria premium em tempo real e calculadora de tunagem profissional para o seu jogo. 
 
@@ -6,7 +90,7 @@ Com ele, você pode acompanhar a temperatura dos pneus (em Celsius), as forças 
 
 ---
 
-## 📋 Guia de Uso Rápidos
+## 📋 Guia de Uso Rápido
 
 Existem duas formas de ligar o seu painel de telemetria: a mais fácil (usando o executável pronto) ou rodando direto do código-fonte (para desenvolvedores).
 

@@ -1,4 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import ArticlesTab from './components/ArticlesTab';
+import LegalTab from './components/LegalTab';
 
 // ==========================================
 // TRAJECTORY MAP COMPONENT
@@ -1725,6 +1727,20 @@ export default function App() {
           <span className="tab-text-desktop">📖 COMO CONECTAR AO JOGO</span>
           <span className="tab-text-mobile">📖 CONECTAR</span>
         </button>
+        <button
+          className={`tab-btn ${activeTab === 'tab-articles' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tab-articles')}
+        >
+          <span className="tab-text-desktop">📚 GUIAS & ARTIGOS</span>
+          <span className="tab-text-mobile">📚 GUIAS</span>
+        </button>
+        <button
+          className={`tab-btn ${activeTab === 'tab-legal' ? 'active' : ''}`}
+          onClick={() => setActiveTab('tab-legal')}
+        >
+          <span className="tab-text-desktop">⚖️ SOBRE/LEGAL</span>
+          <span className="tab-text-mobile">⚖️ LEGAL</span>
+        </button>
       </nav>
 
       {/* Google AdSense Top Banner */}
@@ -3061,6 +3077,14 @@ export default function App() {
           </div>
         </section>
 
+        <section id="tab-articles" className={`tab-pane ${activeTab === 'tab-articles' ? 'active' : ''}`}>
+          <ArticlesTab />
+        </section>
+
+        <section id="tab-legal" className={`tab-pane ${activeTab === 'tab-legal' ? 'active' : ''}`}>
+          <LegalTab />
+        </section>
+
       </main>
 
       {/* Google AdSense Bottom Banner */}
@@ -3094,6 +3118,11 @@ export default function App() {
           </div>
         </div>
         <div className="footer-bottom border-top text-center padding-top-sm" style={{ marginTop: '15px' }}>
+          <div style={{ marginBottom: '10px' }}>
+            <button style={{ background: 'none', border: 'none', color: 'var(--color-cyan)', cursor: 'pointer' }} onClick={() => setActiveTab('tab-legal')}>Sobre Nós</button> | 
+            <button style={{ background: 'none', border: 'none', color: 'var(--color-cyan)', cursor: 'pointer' }} onClick={() => setActiveTab('tab-legal')}>Política de Privacidade</button> | 
+            <button style={{ background: 'none', border: 'none', color: 'var(--color-cyan)', cursor: 'pointer' }} onClick={() => setActiveTab('tab-legal')}>Termos de Uso</button>
+          </div>
           Forza Horizon 6 - Tuning Hub &copy; Desenvolvido localmente para performance máxima.
         </div>
       </footer>
