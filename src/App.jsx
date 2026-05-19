@@ -574,6 +574,9 @@ export default function App() {
   const [tutorialIps, setTutorialIps] = useState(['127.0.0.1']);
   const [lastPacketTime, setLastPacketTime] = useState(0);
   const [isGameTelemetryRunning, setIsGameTelemetryRunning] = useState(false);
+  const [customServerIp, setCustomServerIp] = useState(() => {
+    try { return localStorage.getItem('fth_server_ip') || ''; } catch (e) { return ''; }
+  });
 
   // Trajectory map hook
   const {
@@ -750,7 +753,8 @@ export default function App() {
       window.location.hostname === '127.0.0.1' ||
       window.location.hostname.startsWith('192.168.') ||
       window.location.hostname.startsWith('10.');
-    const wsHost = isLocal ? window.location.hostname : 'localhost';
+    const defaultHost = isLocal ? window.location.hostname : 'localhost';
+    const wsHost = customServerIp.trim() !== '' ? customServerIp.trim() : defaultHost;
     const wsUrl = `ws://${wsHost}:3000`;
     let reconnectTimeout;
 
@@ -818,7 +822,7 @@ export default function App() {
       if (ws) ws.close();
       if (reconnectTimeout) clearTimeout(reconnectTimeout);
     };
-  }, [inputs.autoFillActive]);
+  }, [inputs.autoFillActive, customServerIp]);
 
   // Packet Freshness / Telemetry Active Checker
   useEffect(() => {
@@ -2426,6 +2430,44 @@ export default function App() {
             >
               LIGAR COCKPIT
             </button>
+          </div>
+
+          {/* NETWORK CONFIG FOR MOBILE / EXTERNAL */}
+          <div className="network-config-bar margin-bottom-md glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '8px', padding: '12px 18px', border: '1px solid rgba(255, 255, 255, 0.1)', background: 'rgba(0,0,0,0.2)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <strong style={{ fontSize: '0.86rem', color: '#fff' }}>🌐 Conexão de Telemetria (IP do PC)</strong>
+              <span style={{ fontSize: '0.74rem', color: wsStatus === 'connected' ? 'var(--color-cyan)' : 'var(--text-muted)' }}>
+                Status: {wsStatus === 'connected' ? '🟢 Conectado' : '🔴 Desconectado'}
+              </span>
+            </div>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <input
+                type="text"
+                placeholder="Ex: 192.168.1.15 (Deixe em branco se usar no próprio PC)"
+                value={customServerIp}
+                onChange={(e) => {
+                  setCustomServerIp(e.target.value);
+                  try { localStorage.setItem('fth_server_ip', e.target.value); } catch(err) {}
+                }}
+                className="styled-input"
+                style={{ flex: 1, padding: '6px 12px', fontSize: '0.85rem' }}
+              />
+            </div>
+            <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+              Para acessar via celular, digite o IPv4 local do PC onde o jogo e o servidor (server.js) estão rodando.
+            </span>
+            <details style={{ marginTop: '5px', fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
+              <summary style={{ cursor: 'pointer', color: 'var(--color-cyan)', userSelect: 'none', fontWeight: 600 }}>❓ Como descobrir meu IP local?</summary>
+              <div style={{ marginTop: '8px', padding: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '6px', border: '1px dashed rgba(255,255,255,0.1)' }}>
+                <p style={{ margin: '0 0 5px 0' }}>No computador onde o jogo está aberto:</p>
+                <ol style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                  <li>Pressione as teclas <strong style={{color:'#fff'}}>Win + R</strong>, digite <code style={{background:'rgba(0,0,0,0.5)', padding:'2px 4px', borderRadius:'3px'}}>cmd</code> e dê Enter.</li>
+                  <li>Na tela preta, digite <code style={{background:'rgba(0,0,0,0.5)', padding:'2px 4px', borderRadius:'3px'}}>ipconfig</code> e dê Enter.</li>
+                  <li>Procure a linha <strong style={{color:'#fff'}}>Endereço IPv4</strong> (geralmente começa com 192.168.x.x ou 10.x.x.x).</li>
+                  <li>Digite esse número exato na caixinha acima.</li>
+                </ol>
+              </div>
+            </details>
           </div>
 
           {/* SUSPENSION BOTTOMING OUT REAL-TIME ALERT */}
